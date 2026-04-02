@@ -12,6 +12,8 @@ public class VendorNPC : MonoBehaviour
     public List<ItemData> CurrentStock { get; private set; } = new();
     public Vector2Int GridPos { get; private set; }
 
+    private bool dismissed = false;
+
     void Awake()
     {
         if (Instance != null) { Destroy(gameObject); return; }
@@ -23,6 +25,7 @@ public class VendorNPC : MonoBehaviour
     public void InitForFloor(Vector2Int pos)
     {
         GridPos = pos;
+        dismissed = false;
         RollStock();
     }
 
@@ -40,7 +43,7 @@ public class VendorNPC : MonoBehaviour
 
     public void OpenShop()
     {
-        if (CurrentStock.Count == 0) return;
+        if (dismissed || CurrentStock.Count == 0) return;
         GameManager.Instance.SetState(GameState.Shopping);
         if (ShopUI.Instance != null) ShopUI.Instance.Show(CurrentStock);
     }
@@ -57,6 +60,7 @@ public class VendorNPC : MonoBehaviour
 
     public void CloseShop()
     {
+        dismissed = true;
         GameManager.Instance.SetState(GameState.Exploring);
         if (ShopUI.Instance != null) ShopUI.Instance.Hide();
     }

@@ -47,12 +47,14 @@ public class BuffSelectionUI : MonoBehaviour
 
     void OnStateChanged(GameState state)
     {
+        Debug.Log($"BuffSelectionUI got state: {state}");
         if (state == GameState.BuffSelection) Show();
         else                                  panel.SetActive(false);
     }
 
     void Show()
     {
+        Debug.Log("BuffSelectionUI.Show() called");
         offered.Clear();
         var pool = new List<BuffData>(buffPool);
 

@@ -25,8 +25,8 @@ public class CombatManager : MonoBehaviour
     public void StartCombat(EnemyInstance enemy)
     {
         currentEnemy = enemy;
-        GameManager.Instance.SetState(GameState.InCombat);
         OnCombatStart?.Invoke(enemy);
+        GameManager.Instance.SetState(GameState.InCombat);
         StartPlayerTurn();
     }
 
