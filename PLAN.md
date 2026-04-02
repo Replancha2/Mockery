@@ -1,44 +1,125 @@
-# DCJam — Bard Dungeon Crawler
-## 7-Day Implementation Plan
+# Mockery — Bard Dungeon Crawler
+## Implementation Plan
 
 ---
 
 ## Game Summary
 
-You play as a **Bard** descending into a demon-filled dungeon.
-Combat uses **WASD/Arrow key sequences** to cast elemental songs.
-Enemies have one element — choose the right counter or take the hit.
-**5 floors**, procedurally generated, permadeath.
+You play as a **Bard** captured by demons. Equipped only with your **Libro de Insultos** (insult book), you must escape a demon prison floor by floor.
 
-**Theme:** Elemental Rock Paper Scissors
+Combat uses **WASD sequences** (Helldivers-style) to cast insults. Enemies have randomly generated elemental resistances — use the right type or face the consequences.
+
+**Permadeath.** Die on any floor → restart the entire run.
+
+**Theme:** Asonante / Discordante / Consonante (Elemental RPS)
 **Engine:** Unity (URP)
-**Key Package:** DOTween (smooth grid movement/rotation)
+**Key Package:** DOTween
 
 ---
 
 ## Element Cycle
 
 ```
-Fire → Wind → Earth → Water → Fire
-(each element beats the one to its right)
+Discordante → Consonante → Asonante → Discordante
+(each beats the one to its right)
 ```
 
-### Song Sequences (6 keys, WASD or Arrow keys)
+| Your spell       | Beats           | Loses to        |
+|------------------|-----------------|-----------------|
+| Discordante      | Consonante      | Asonante        |
+| Consonante       | Asonante        | Discordante     |
+| Asonante         | Discordante     | Consonante      |
 
-| Element | Sequence |
-|---------|----------|
-| Fire    | ↑ ↑ → ↑ ↑ → |
-| Water   | ← ↓ ↓ ← ↓ ↓ |
-| Earth   | ↓ ↓ → ↓ ↓ → |
-| Wind    | ↑ ← → ↑ ← → |
+### Spell Sequences (WASD input, Helldivers-style)
 
-### Combat Outcomes
+Each spell shows directional arrows in the Libro UI. Player inputs the sequence to cast.
 
-| Input | Element Match | Result |
-|-------|--------------|--------|
-| Wrong keys | — | Lose turn, enemy attacks |
-| Correct keys | Wrong element | Chip damage, enemy attacks |
-| Correct keys | Right element | Full/bonus damage, enemy does NOT attack |
+| Spell Type   | Sequence    |
+|--------------|-------------|
+| Asonante     | ↑ ↑ → ↑    |
+| Discordante  | ← ↓ ↓ ←   |
+| Consonante   | ↓ → → ↓   |
+
+> **Design note:** Combat is turn-based. Each turn has a time window. Faster input = more time remaining = player advantage (can act again before timer resets). Players who memorize sequences can skip looking at the book and gain speed.
+
+### Enemy Resistance System
+
+Every enemy has a **randomly rolled** resistance profile across the 3 elements:
+
+| Resistance Tier | Effect            |
+|-----------------|-------------------|
+| Immune          | 0× damage         |
+| Normal          | 1× damage         |
+| Weak            | 2× damage         |
+
+Each enemy always has exactly one of each tier (one immune, one normal, one weak). The player must figure out the weakness through trial and error or memory.
+
+---
+
+## Roguelike Systems
+
+### Between-Floor Buffs
+After clearing a floor and before entering the next, the player is offered **3 random buffs** to choose from. Buffs affect skills or main stats (e.g., "+15% Asonante damage", "+10 max HP", "DOT resistance", "gold multiplier").
+
+### Permadeath
+Dying on any floor returns the player to Floor 1. All progress lost. No checkpoints.
+
+---
+
+## NPCs (2 per dungeon floor)
+
+### Vendor
+- Appears in a dedicated room each floor.
+- Sells **equipment only** (no buffs).
+- Currency: gold dropped by enemies.
+
+### Beggar (Monea)
+- Appears in a dedicated room each floor.
+- Give him 1 gold coin → random outcome:
+  - **Good:** Drops a buff or item.
+  - **Nothing:** Walks away.
+  - **Bad:** Stabs you for significant HP loss.
+
+---
+
+## Equipment Slots (5)
+
+| Slot     | Flavor Name |
+|----------|-------------|
+| Head     | Cabeza      |
+| Chest    | Pecho       |
+| Legs     | Pantalones  |
+| Feet     | Zapatos     |
+| Weapon   | Pluma (feather — all weapons are quills) |
+
+Equipment is **stat-only**, no visual cosmetics. Stats include: HP, defense, spell damage per type, speed, gold find, etc.
+
+---
+
+## Enemies
+
+### Regular Enemies
+- Spawn randomly throughout dungeon floors.
+- Drop **gold** and **items** on death (chance-based).
+- Each has a randomly rolled resistance profile (see above).
+- **3 abilities** available to each enemy:
+  1. **Heal** — Restores a portion of their own HP.
+  2. **DOT** — Applies a damage-over-time effect to the player.
+  3. **Power Strike** — Deals slightly more damage than a normal attack.
+
+### Mini-Boss
+- Spawns in the **room adjacent to the exit/stairs** of every floor.
+- Is a regular enemy type but with:
+  - Significantly more HP.
+  - Increased base damage.
+- Must be defeated to access the stairs.
+
+### Dragon (Final Boss)
+- Appears on the last floor.
+- **Only has damage abilities** — no self-healing.
+- **Phase mechanic:** Every 25% HP lost, the Dragon rotates its resistance profile.
+  - e.g., starts Immune to Discordante → at 75% HP becomes Immune to Asonante → etc.
+- Defeating the Dragon = win condition.
 
 ---
 
@@ -47,23 +128,29 @@ Fire → Wind → Earth → Water → Fire
 ```
 Assets/
   Scripts/
-    Core/         GameManager, FloorManager, DungeonOrchestrator
-    Dungeon/      BSPGenerator, DungeonData, DungeonRenderer, BSPNode
-    Player/       GridMover, PlayerStats
-    Combat/       CombatManager, SongInputHandler, ElementSystem
-    Enemies/      EnemyData, EnemyInstance, EnemySpawner
-    Items/        ItemData, ItemPickup, ItemSpawner
-    UI/           CombatUIController, HUDController, GameOverUI
+    Core/         GameManager, FloorManager, RunManager, DungeonOrchestrator
+    Dungeon/      BSPGenerator, DungeonData, DungeonRenderer, BSPNode, RoomTag
+    Player/       GridMover, PlayerStats, EquipmentManager
+    Combat/       CombatManager, SpellInputHandler, ElementSystem, BuffSystem
+    Enemies/      EnemyData, EnemyInstance, EnemySpawner, EnemyAI
+    Items/        ItemData, ItemPickup, ItemSpawner, EquipmentData
+    NPCs/         VendorNPC, BeggarNPC, NPCSpawner
+    Buffs/        BuffData, BuffPool, BuffSelectionUI
+    UI/           CombatUIController, HUDController, GameOverUI, VictoryUI,
+                  LibroUI (spell book input display), BuffPickUI, ShopUI
   ScriptableObjects/
-    Enemies/      FireDemon, WaterDemon, EarthDemon, WindDemon, FloorBoss, FinalBoss
-    Items/        HealthPotion, LuteString, SheetMusic_Fire/Water/Earth/Wind, Earplugs
+    Enemies/      EnemyBase (variants: Discordante, Consonante, Asonante, MiniBoss)
+    Items/        EquipmentItems (per slot), GoldPickup
+    Buffs/        BuffDefinitions (15–20 buffs)
+    Boss/         DragonBoss
   Prefabs/
-    Dungeon/      Wall, Floor, Ceiling, Stairs
-    Enemies/      EnemyPrefab
-    Items/        ItemPickupPrefab
-    VFX/          VFX_Fire, VFX_Water, VFX_Earth, VFX_Wind
+    Dungeon/      Wall, Floor, Ceiling, Stairs, NPCRoom
+    Enemies/      EnemyPrefab, MiniBossPrefab, DragonPrefab
+    Items/        ItemPickupPrefab, GoldPickupPrefab
+    NPCs/         VendorPrefab, BeggarPrefab
+    VFX/          VFX_Asonante, VFX_Discordante, VFX_Consonante
   Scenes/
-    MainMenu, Game, GameOver
+    MainMenu, Game, GameOver, Victory
 ```
 
 ---
@@ -72,24 +159,25 @@ Assets/
 
 | Day | Goal |
 |-----|------|
-| 1 | GameManager, FloorManager, GridMover, Camera in empty scene |
-| 2 | BSP generator + DungeonRenderer showing walkable dungeon |
-| 3 | Enemies in dungeon, collision triggers combat screen |
-| 4 | Full combat loop: song input → damage → enemy dies → back to exploring |
-| 5 | Items, stats, floor transitions, death/win conditions |
-| 6 | Boss, HUD, audio, main menu, game over screen |
-| 7 | Polish, WebGL build, test, upload |
+| 1   | GameManager, FloorManager, RunManager, GridMover, Camera in empty scene |
+| 2   | BSP generator + DungeonRenderer with room tagging (NPC rooms, mini-boss room) |
+| 3   | Enemies in dungeon, collision triggers combat, spell input system (LibroUI) |
+| 4   | Full combat loop: input → element check → damage with resistances → enemy dies → back to exploring |
+| 5   | Equipment slots, vendor NPC, beggar NPC, gold economy |
+| 6   | Buff selection between floors, permadeath, mini-boss, Dragon boss with phase rotation |
+| 7   | Polish, HUD, audio, main menu, game over / victory screens, WebGL build |
 
 ---
 
 ## Cut List (if running out of time, in order)
 
-1. Flee mechanic — remove the button
-2. Sheet Music / Earplugs passives — items exist but apply no effect
-3. Boss phase switch — boss just has more HP
-4. Mini-bosses per floor — replace with regular enemies
-5. Ceiling rendering — player won't notice much
-6. Smooth rotation — snap to 90° instantly instead
+1. Timed turn window — make turns fully static (no time pressure)
+2. Beggar NPC — keep vendor only
+3. Equipment visual feedback — items just show stat numbers
+4. Mini-boss room lock — treat mini-boss as a regular enemy on that tile
+5. Dragon phase rotation — Dragon just has more HP
+6. Buff selection UI polish — show 3 text buttons, no card animations
+7. Ceiling rendering — player won't notice much
 
 ---
 
@@ -101,7 +189,7 @@ Assets/
 - [ ] **1.1** Create Unity project with **URP template**
 - [ ] **1.2** Install **DOTween** from Asset Store or `dotween.demigiant.com`
 - [ ] **1.3** Create folder structure under `Assets/` as listed above
-- [ ] **1.4** Create three scenes: `MainMenu`, `Game`, `GameOver`
+- [ ] **1.4** Create scenes: `MainMenu`, `Game`, `GameOver`, `Victory`
 - [ ] **1.5** Add `GameManager` to the `Game` scene as a persistent singleton
 
 ---
@@ -109,7 +197,7 @@ Assets/
 ### PHASE 2 — Core Architecture & State Machine
 > Day 1
 
-- [ ] **2.1** Create `GameState` enum (`MainMenu`, `Exploring`, `InCombat`, `GameOver`, `Victory`)
+- [ ] **2.1** Create `GameState` enum: `MainMenu`, `Exploring`, `InCombat`, `BuffSelection`, `Shopping`, `GameOver`, `Victory`
 - [ ] **2.2** Implement `GameManager` singleton with `SetState()`, `StartNewRun()`, `GameOver()`, `Victory()`
 
 ```csharp
@@ -128,7 +216,7 @@ public class GameManager : MonoBehaviour
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        DOTween.Init();
+        DG.Tweening.DOTween.Init();
     }
 
     public void SetState(GameState newState)
@@ -139,30 +227,30 @@ public class GameManager : MonoBehaviour
 
     public void StartNewRun()
     {
-        FloorManager.Instance.ResetFloor();
+        RunManager.Instance.ResetRun();
         SceneManager.LoadScene("Game");
         SetState(GameState.Exploring);
     }
 
     public void GameOver() => SceneManager.LoadScene("GameOver");
-    public void Victory()  => SetState(GameState.Victory);
+    public void Victory()  => SceneManager.LoadScene("Victory");
 }
 ```
 
-- [ ] **2.3** Implement `FloorManager` singleton with `CurrentFloor`, `NextFloor()`, `ResetFloor()`, and `GetInputTimeLimit()`
+- [ ] **2.3** Implement `RunManager` singleton — tracks current floor, player buffs, gold, and handles floor transitions + buff selection trigger
 
 ```csharp
-// Scripts/Core/FloorManager.cs
+// Scripts/Core/RunManager.cs
 using UnityEngine;
+using System.Collections.Generic;
 
-public class FloorManager : MonoBehaviour
+public class RunManager : MonoBehaviour
 {
-    public static FloorManager Instance { get; private set; }
+    public static RunManager Instance { get; private set; }
     public int CurrentFloor { get; private set; } = 1;
+    public int Gold { get; private set; } = 0;
+    public List<BuffData> ActiveBuffs { get; private set; } = new();
     public const int MaxFloors = 5;
-
-    // Timer window shrinks per floor: 6s → 4s across 5 floors
-    public float GetInputTimeLimit() => Mathf.Max(3f, 6f - (CurrentFloor - 1) * 0.5f);
 
     void Awake()
     {
@@ -171,14 +259,31 @@ public class FloorManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    public void ResetFloor() => CurrentFloor = 1;
+    public void ResetRun()
+    {
+        CurrentFloor = 1;
+        Gold = 0;
+        ActiveBuffs.Clear();
+    }
+
+    public void AddGold(int amount) => Gold += amount;
+    public bool SpendGold(int amount)
+    {
+        if (Gold < amount) return false;
+        Gold -= amount;
+        return true;
+    }
 
     public void NextFloor()
     {
         CurrentFloor++;
         if (CurrentFloor > MaxFloors)
             GameManager.Instance.Victory();
+        else
+            GameManager.Instance.SetState(GameState.BuffSelection);
     }
+
+    public float GetTurnTimeLimit() => Mathf.Max(3f, 6f - (CurrentFloor - 1) * 0.5f);
 }
 ```
 
@@ -187,11 +292,9 @@ public class FloorManager : MonoBehaviour
 ### PHASE 3 — Grid Movement & First-Person Camera
 > Day 1
 
-**Why:** This is the most jam-rule-sensitive system. Must be correct before building the dungeon around it. Grid cells are **4 Unity units** wide.
-
-- [ ] **3.1** Create a `Player` GameObject in the `Game` scene with a child `Camera` at local position `(0, 0, 0)`. Eye height is handled in `GridMover.GridToWorld()` (returns Y = 1.6).
-- [ ] **3.2** Set camera **FOV to 70–75** for a classic dungeon crawler feel.
-- [ ] **3.3** Implement `GridMover` with DOTween smooth movement and rotation. Input is blocked when `GameState != Exploring`.
+- [ ] **3.1** Create `Player` GameObject in `Game` scene with child `Camera` at local `(0, 0, 0)`. Eye height handled in `GridToWorld()` (Y = 1.6).
+- [ ] **3.2** Set camera **FOV 70–75**.
+- [ ] **3.3** Implement `GridMover` with DOTween. Input blocked when `GameState != Exploring`.
 
 ```csharp
 // Scripts/Player/GridMover.cs
@@ -202,11 +305,9 @@ public class GridMover : MonoBehaviour
 {
     public float moveSpeed = 8f;
     public float turnSpeed = 10f;
-
     private Vector2Int gridPos;
     private float facing = 0f; // 0=North 90=East 180=South 270=West
     private bool isMoving = false;
-
     public const float CellSize = 4f;
 
     void Update()
@@ -239,12 +340,10 @@ public class GridMover : MonoBehaviour
         ItemPickup item = ItemSpawner.Instance.GetItemAt(target);
         if (item != null) item.Collect();
 
-        if (DungeonRenderer.Instance.IsStairs(target))
-        {
-            FloorManager.Instance.NextFloor();
-            FindObjectOfType<DungeonOrchestrator>().GenerateFloor();
-            return;
-        }
+        RoomTag tag = DungeonRenderer.Instance.GetRoomTag(target);
+        if (tag == RoomTag.Vendor)  { VendorNPC.Instance.OpenShop(); return; }
+        if (tag == RoomTag.Beggar)  { BeggarNPC.Instance.Interact(); return; }
+        if (tag == RoomTag.Stairs)  { RunManager.Instance.NextFloor(); return; }
 
         isMoving = true;
         gridPos = target;
@@ -282,16 +381,12 @@ public class GridMover : MonoBehaviour
 }
 ```
 
-- [ ] **3.4** Test: player moves forward/back, turns left/right, transitions are smooth. Movement is blocked at dungeon edges (add a test room temporarily).
-
 ---
 
 ### PHASE 4 — BSP Dungeon Generation
 > Day 2
 
-**Why:** All other systems (rendering, enemy placement, items) consume `DungeonData`. Generate data structure first, render second.
-
-- [ ] **4.1** Create `DungeonData` class with `CellType[,]` grid, spawn positions, enemy/item lists.
+- [ ] **4.1** Create `CellType` enum and `RoomTag` enum. Create `DungeonData`.
 
 ```csharp
 // Scripts/Dungeon/DungeonData.cs
@@ -299,11 +394,13 @@ using UnityEngine;
 using System.Collections.Generic;
 
 public enum CellType { Wall, Floor, Corridor }
+public enum RoomTag  { None, PlayerSpawn, Vendor, Beggar, MiniBoss, Stairs }
 
 public class DungeonData
 {
     public int Width, Height;
     public CellType[,] Cells;
+    public RoomTag[,]  Tags;
     public Vector2Int PlayerSpawn;
     public Vector2Int StairsPos;
     public List<Vector2Int> EnemySpawns = new();
@@ -313,6 +410,7 @@ public class DungeonData
     {
         Width = w; Height = h;
         Cells = new CellType[w, h];
+        Tags  = new RoomTag[w, h];
         for (int x = 0; x < w; x++)
             for (int y = 0; y < h; y++)
                 Cells[x, y] = CellType.Wall;
@@ -324,1267 +422,619 @@ public class DungeonData
 }
 ```
 
-- [ ] **4.2** Implement `BSPNode` helper class.
-
-```csharp
-// Scripts/Dungeon/BSPNode.cs
-using UnityEngine;
-
-public class BSPNode
-{
-    public RectInt Bounds;
-    public BSPNode Left, Right;
-    public RectInt Room;
-    public bool IsLeaf => Left == null && Right == null;
-    public BSPNode(RectInt bounds) { Bounds = bounds; }
-}
-```
-
-- [ ] **4.3** Implement `BSPGenerator` with `Split()`, `CreateRooms()`, `ConnectRooms()`, enemy/item/stairs placement.
-
-```csharp
-// Scripts/Dungeon/BSPGenerator.cs
-using UnityEngine;
-using System.Collections.Generic;
-
-public class BSPGenerator : MonoBehaviour
-{
-    public static BSPGenerator Instance { get; private set; }
-
-    [Header("Map Size")]
-    public int mapWidth  = 40;
-    public int mapHeight = 40;
-
-    [Header("BSP Settings")]
-    public int minLeafSize = 8;
-    public int maxLeafSize = 16;
-
-    [Header("Spawn Counts")]
-    public int enemiesPerFloor = 6;
-    public int itemsPerFloor   = 4;
-
-    void Awake()
-    {
-        if (Instance != null) { Destroy(gameObject); return; }
-        Instance = this;
-    }
-
-    public DungeonData Generate()
-    {
-        var data  = new DungeonData(mapWidth, mapHeight);
-        var root  = new BSPNode(new RectInt(0, 0, mapWidth, mapHeight));
-        var leaves = new List<BSPNode>();
-
-        Split(root, leaves);
-        CreateRooms(data, leaves);
-        ConnectRooms(data, root);
-        PlaceStairs(data, leaves);
-        PlaceEnemies(data, leaves);
-        PlaceItems(data, leaves);
-
-        return data;
-    }
-
-    void Split(BSPNode node, List<BSPNode> leaves)
-    {
-        if (node.Bounds.width <= maxLeafSize && node.Bounds.height <= maxLeafSize)
-        {
-            leaves.Add(node); return;
-        }
-
-        bool splitH = Random.value > 0.5f;
-        if (node.Bounds.width  > node.Bounds.height * 1.25f) splitH = false;
-        if (node.Bounds.height > node.Bounds.width  * 1.25f) splitH = true;
-
-        int max = (splitH ? node.Bounds.height : node.Bounds.width) - minLeafSize;
-        if (max <= minLeafSize) { leaves.Add(node); return; }
-
-        int split = Random.Range(minLeafSize, max);
-
-        if (splitH)
-        {
-            node.Left  = new BSPNode(new RectInt(node.Bounds.x, node.Bounds.y,
-                                                  node.Bounds.width, split));
-            node.Right = new BSPNode(new RectInt(node.Bounds.x, node.Bounds.y + split,
-                                                  node.Bounds.width, node.Bounds.height - split));
-        }
-        else
-        {
-            node.Left  = new BSPNode(new RectInt(node.Bounds.x, node.Bounds.y,
-                                                  split, node.Bounds.height));
-            node.Right = new BSPNode(new RectInt(node.Bounds.x + split, node.Bounds.y,
-                                                  node.Bounds.width - split, node.Bounds.height));
-        }
-
-        Split(node.Left,  leaves);
-        Split(node.Right, leaves);
-    }
-
-    void CreateRooms(DungeonData data, List<BSPNode> leaves)
-    {
-        bool first = true;
-        foreach (var leaf in leaves)
-        {
-            int w = Random.Range(4, leaf.Bounds.width  - 2);
-            int h = Random.Range(4, leaf.Bounds.height - 2);
-            int x = leaf.Bounds.x + Random.Range(1, leaf.Bounds.width  - w - 1);
-            int y = leaf.Bounds.y + Random.Range(1, leaf.Bounds.height - h - 1);
-            leaf.Room = new RectInt(x, y, w, h);
-
-            for (int rx = x; rx < x + w; rx++)
-                for (int ry = y; ry < y + h; ry++)
-                    data.Cells[rx, ry] = CellType.Floor;
-
-            if (first) { data.PlayerSpawn = new Vector2Int(x + w / 2, y + h / 2); first = false; }
-        }
-    }
-
-    void ConnectRooms(DungeonData data, BSPNode node)
-    {
-        if (node.Left == null || node.Right == null) return;
-        ConnectRooms(data, node.Left);
-        ConnectRooms(data, node.Right);
-
-        Vector2Int a = GetRoomCenter(node.Left);
-        Vector2Int b = GetRoomCenter(node.Right);
-        CarveHorizontal(data, a, new Vector2Int(b.x, a.y));
-        CarveVertical(data,   new Vector2Int(b.x, a.y), b);
-    }
-
-    void CarveHorizontal(DungeonData data, Vector2Int from, Vector2Int to)
-    {
-        int minX = Mathf.Min(from.x, to.x), maxX = Mathf.Max(from.x, to.x);
-        for (int x = minX; x <= maxX; x++)
-            if (data.Cells[x, from.y] == CellType.Wall)
-                data.Cells[x, from.y] = CellType.Corridor;
-    }
-
-    void CarveVertical(DungeonData data, Vector2Int from, Vector2Int to)
-    {
-        int minY = Mathf.Min(from.y, to.y), maxY = Mathf.Max(from.y, to.y);
-        for (int y = minY; y <= maxY; y++)
-            if (data.Cells[from.x, y] == CellType.Wall)
-                data.Cells[from.x, y] = CellType.Corridor;
-    }
-
-    Vector2Int GetRoomCenter(BSPNode node)
-    {
-        if (node.IsLeaf)
-            return new Vector2Int(node.Room.x + node.Room.width  / 2,
-                                  node.Room.y + node.Room.height / 2);
-        return GetRoomCenter(Random.value > 0.5f ? node.Left : node.Right);
-    }
-
-    void PlaceStairs(DungeonData data, List<BSPNode> leaves)
-    {
-        // Last leaf = farthest from player spawn
-        BSPNode last = leaves[leaves.Count - 1];
-        data.StairsPos = new Vector2Int(
-            last.Room.x + last.Room.width  / 2,
-            last.Room.y + last.Room.height / 2
-        );
-    }
-
-    void PlaceEnemies(DungeonData data, List<BSPNode> leaves)
-    {
-        for (int i = 1; i < leaves.Count && data.EnemySpawns.Count < enemiesPerFloor; i++)
-        {
-            var pos = new Vector2Int(leaves[i].Room.x + 1, leaves[i].Room.y + 1);
-            if (pos != data.StairsPos) data.EnemySpawns.Add(pos);
-        }
-    }
-
-    void PlaceItems(DungeonData data, List<BSPNode> leaves)
-    {
-        for (int i = 0; i < itemsPerFloor && i < leaves.Count - 1; i++)
-        {
-            var room = leaves[i + 1].Room;
-            var pos  = new Vector2Int(room.x + room.width - 2, room.y + room.height - 2);
-            if (!data.EnemySpawns.Contains(pos) && pos != data.StairsPos)
-                data.ItemSpawns.Add(pos);
-        }
-    }
-}
-```
-
-- [ ] **4.4** Test: call `Generate()` and log `PlayerSpawn`, `StairsPos`, enemy/item counts to verify output is valid.
+- [ ] **4.2** Implement `BSPNode` helper.
+- [ ] **4.3** Implement `BSPGenerator`:
+  - Standard BSP split + room creation + corridor connections.
+  - After generating rooms, tag: **PlayerSpawn room**, **Stairs room** (with MiniBoss tag on entry tile), **Vendor room**, **Beggar room**.
+  - Remaining rooms get enemy/item spawns.
+- [ ] **4.4** Implement `DungeonRenderer`: instantiates wall/floor/ceiling prefabs from `DungeonData`.
+- [ ] **4.5** Implement `DungeonOrchestrator`: calls Generate → Render → PlaceEnemies → PlaceItems → PlaceNPCs on scene load and floor transition.
 
 ---
 
-### PHASE 5 — Dungeon Rendering
-> Day 2–3
-
-**Why:** You need to see and walk through the generated dungeon. Keep all prefabs as simple colored primitives for now — art comes last.
-
-- [ ] **5.1** Create dungeon prefabs in Unity editor:
-  - `Wall` — cube scaled `(4, 4, 0.2)`, gray material
-  - `Floor` — plane scaled `(0.4, 1, 0.4)`, dark gray material
-  - `Ceiling` — same as floor, flipped `(Euler 180,0,0)`, slightly lighter
-  - `Stairs` — cube, distinct color (e.g. yellow), replace with real art later
-
-- [ ] **5.2** Implement `DungeonRenderer` — instantiates floor/ceiling per walkable cell, walls on edges between walkable and non-walkable cells.
-
-```csharp
-// Scripts/Dungeon/DungeonRenderer.cs
-using UnityEngine;
-using System.Collections.Generic;
-
-public class DungeonRenderer : MonoBehaviour
-{
-    public static DungeonRenderer Instance { get; private set; }
-
-    [Header("Prefabs")]
-    public GameObject wallPrefab;
-    public GameObject floorPrefab;
-    public GameObject ceilingPrefab;
-    public GameObject stairsPrefab;
-
-    private DungeonData currentData;
-    private List<GameObject> spawnedObjects = new();
-
-    void Awake()
-    {
-        if (Instance != null) { Destroy(gameObject); return; }
-        Instance = this;
-    }
-
-    public void Render(DungeonData data)
-    {
-        currentData = data;
-        foreach (var obj in spawnedObjects) Destroy(obj);
-        spawnedObjects.Clear();
-
-        float cell = GridMover.CellSize;
-
-        for (int x = 0; x < data.Width; x++)
-        {
-            for (int y = 0; y < data.Height; y++)
-            {
-                var pos2D = new Vector2Int(x, y);
-                if (!data.IsFloor(pos2D)) continue;
-
-                Vector3 worldPos = new Vector3(x * cell, 0, y * cell);
-
-                Spawn(floorPrefab,   worldPos,                     Quaternion.identity);
-                Spawn(ceilingPrefab, worldPos + Vector3.up * cell, Quaternion.Euler(180, 0, 0));
-
-                if (pos2D == data.StairsPos)
-                    Spawn(stairsPrefab, worldPos, Quaternion.identity);
-
-                SpawnWallIfNeeded(data, x, y, -1,  0, 270f);
-                SpawnWallIfNeeded(data, x, y,  1,  0,  90f);
-                SpawnWallIfNeeded(data, x, y,  0, -1, 180f);
-                SpawnWallIfNeeded(data, x, y,  0,  1,   0f);
-            }
-        }
-    }
-
-    void SpawnWallIfNeeded(DungeonData data, int x, int y, int dx, int dy, float rotY)
-    {
-        if (!data.IsFloor(new Vector2Int(x + dx, y + dy)))
-        {
-            float cell = GridMover.CellSize;
-            Vector3 wallPos = new Vector3(
-                (x + dx * 0.5f) * cell,
-                cell * 0.5f,
-                (y + dy * 0.5f) * cell
-            );
-            Spawn(wallPrefab, wallPos, Quaternion.Euler(0, rotY, 0));
-        }
-    }
-
-    GameObject Spawn(GameObject prefab, Vector3 pos, Quaternion rot)
-    {
-        var obj = Instantiate(prefab, pos, rot, transform);
-        spawnedObjects.Add(obj);
-        return obj;
-    }
-
-    public bool IsWalkable(Vector2Int pos) => currentData != null && currentData.IsFloor(pos);
-    public bool IsStairs(Vector2Int pos)   => currentData != null && pos == currentData.StairsPos;
-}
-```
-
-- [ ] **5.3** Test: generate dungeon, render it, walk through it. Verify walls appear on correct edges, no gaps.
-
----
-
-### PHASE 6 — Enemy System
+### PHASE 5 — Element System
 > Day 3
 
-- [ ] **6.1** Create `EnemyData` ScriptableObject.
-
-```csharp
-// Scripts/Enemies/EnemyData.cs
-using UnityEngine;
-
-[CreateAssetMenu(menuName = "DCJam/EnemyData")]
-public class EnemyData : ScriptableObject
-{
-    public string enemyName;
-    public Element element;
-    public Element secondPhaseElement; // boss only
-    public int maxHP;
-    public int attackDamage;
-    public bool isBoss;
-    public Sprite sprite;              // shown on combat screen
-    public GameObject elementVFXPrefab; // colored particle in dungeon
-}
-```
-
-- [ ] **6.2** Create ScriptableObject assets: `FireDemon`, `WaterDemon`, `EarthDemon`, `WindDemon`, `FloorBoss`, `FinalBoss`.
-- [ ] **6.3** Implement `EnemyInstance` — exists in dungeon on a grid cell, shows element VFX.
-
-```csharp
-// Scripts/Enemies/EnemyInstance.cs
-using UnityEngine;
-
-public class EnemyInstance : MonoBehaviour
-{
-    public EnemyData data;
-    public int CurrentHP { get; private set; }
-    public Vector2Int GridPos { get; private set; }
-
-    public void Init(EnemyData d, Vector2Int pos)
-    {
-        data = d;
-        CurrentHP = d.maxHP;
-        GridPos = pos;
-        transform.position = GridMover.GridToWorld(pos);
-        if (d.elementVFXPrefab)
-            Instantiate(d.elementVFXPrefab, transform);
-    }
-
-    // Returns true if enemy died
-    public bool TakeDamage(int amount)
-    {
-        CurrentHP -= amount;
-        return CurrentHP <= 0;
-    }
-}
-```
-
-- [ ] **6.4** Implement `EnemySpawner` — spawns enemies from `DungeonData`, tracks active enemies, handles removal.
-
-```csharp
-// Scripts/Enemies/EnemySpawner.cs
-using UnityEngine;
-using System.Collections.Generic;
-
-public class EnemySpawner : MonoBehaviour
-{
-    public static EnemySpawner Instance { get; private set; }
-
-    public EnemyData[] basicEnemies;  // assign in inspector: one per element
-    public EnemyData   bossFinalData;
-    public GameObject  enemyPrefab;
-
-    private List<EnemyInstance> activeEnemies = new();
-
-    void Awake()
-    {
-        if (Instance != null) { Destroy(gameObject); return; }
-        Instance = this;
-    }
-
-    public void SpawnEnemies(DungeonData data, int floor)
-    {
-        foreach (var e in activeEnemies) if (e) Destroy(e.gameObject);
-        activeEnemies.Clear();
-
-        bool isFinalFloor = floor >= FloorManager.MaxFloors;
-
-        for (int i = 0; i < data.EnemySpawns.Count; i++)
-        {
-            EnemyData d = (isFinalFloor && i == 0)
-                ? bossFinalData
-                : basicEnemies[Random.Range(0, basicEnemies.Length)];
-
-            var go = Instantiate(enemyPrefab, transform);
-            var ei = go.GetComponent<EnemyInstance>();
-            ei.Init(d, data.EnemySpawns[i]);
-            activeEnemies.Add(ei);
-        }
-    }
-
-    public EnemyInstance GetEnemyAt(Vector2Int pos)
-        => activeEnemies.Find(e => e != null && e.GridPos == pos);
-
-    public void RemoveEnemy(EnemyInstance e)
-    {
-        activeEnemies.Remove(e);
-        Destroy(e.gameObject);
-    }
-}
-```
-
-- [ ] **6.5** Test: generate floor, walk toward an enemy cell, verify `GetEnemyAt()` returns the correct instance.
-
----
-
-### PHASE 7 — Element System & Combat Manager
-> Day 3–4
-
-- [ ] **7.1** Implement `ElementSystem` static class.
+- [ ] **5.1** Define `ElementType` enum: `Asonante`, `Discordante`, `Consonante`.
+- [ ] **5.2** Implement `ElementSystem` static class with `GetMultiplier(ElementType attack, ResistanceTier tier)`.
 
 ```csharp
 // Scripts/Combat/ElementSystem.cs
-public enum Element { Fire, Water, Earth, Wind }
+public enum ElementType { Asonante, Discordante, Consonante }
+
+// Discordante beats Consonante
+// Consonante beats Asonante
+// Asonante beats Discordante
+public enum ResistanceTier { Immune, Normal, Weak }
 
 public static class ElementSystem
 {
-    // Cycle: Fire > Wind > Earth > Water > Fire
-    public static bool Beats(Element attacker, Element defender) =>
-        (attacker == Element.Fire  && defender == Element.Wind)  ||
-        (attacker == Element.Wind  && defender == Element.Earth) ||
-        (attacker == Element.Earth && defender == Element.Water) ||
-        (attacker == Element.Water && defender == Element.Fire);
-
-    public static Element GetCounter(Element e) => e switch
+    // Returns damage multiplier: 0 (immune), 1 (normal), 2 (weak)
+    public static float GetMultiplier(ResistanceTier tier) => tier switch
     {
-        Element.Fire  => Element.Water,
-        Element.Water => Element.Wind,
-        Element.Wind  => Element.Earth,
-        Element.Earth => Element.Fire,
-        _             => Element.Fire
+        ResistanceTier.Immune => 0f,
+        ResistanceTier.Normal => 1f,
+        ResistanceTier.Weak   => 2f,
+        _ => 1f
     };
 
-    // 2 = super effective | 1 = neutral | 0 = not effective
-    public static int GetMultiplier(Element attack, Element defense)
+    // Returns which element beats the given element
+    public static ElementType GetCounter(ElementType e) => e switch
     {
-        if (Beats(attack, defense)) return 2;
-        if (Beats(defense, attack)) return 0;
-        return 1;
-    }
+        ElementType.Asonante    => ElementType.Consonante,
+        ElementType.Discordante => ElementType.Asonante,
+        ElementType.Consonante  => ElementType.Discordante,
+        _ => e
+    };
 }
 ```
 
-- [ ] **7.2** Implement `SongInputHandler` — 6-key sequence matching, timer, fires `OnSuccess`/`OnFail` events.
+- [ ] **5.3** Implement `EnemyResistance` — randomly assigns one Immune/Normal/Weak per element (each tier used exactly once).
 
 ```csharp
-// Scripts/Combat/SongInputHandler.cs
-using UnityEngine;
+// Scripts/Enemies/EnemyResistance.cs
 using System.Collections.Generic;
+using UnityEngine;
 
-public class SongInputHandler : MonoBehaviour
+public class EnemyResistance
 {
-    public static SongInputHandler Instance { get; private set; }
+    public Dictionary<ElementType, ResistanceTier> Tiers = new();
 
-    public enum Dir { Up, Down, Left, Right }
-
-    public static readonly Dictionary<Element, Dir[]> Songs = new()
+    public EnemyResistance()
     {
-        { Element.Fire,  new[]{ Dir.Up, Dir.Up, Dir.Right, Dir.Up, Dir.Up, Dir.Right } },
-        { Element.Water, new[]{ Dir.Left, Dir.Down, Dir.Down, Dir.Left, Dir.Down, Dir.Down } },
-        { Element.Earth, new[]{ Dir.Down, Dir.Down, Dir.Right, Dir.Down, Dir.Down, Dir.Right } },
-        { Element.Wind,  new[]{ Dir.Up, Dir.Left, Dir.Right, Dir.Up, Dir.Left, Dir.Right } },
-    };
+        var elements = new List<ElementType>
+            { ElementType.Asonante, ElementType.Discordante, ElementType.Consonante };
+        var tiers = new List<ResistanceTier>
+            { ResistanceTier.Immune, ResistanceTier.Normal, ResistanceTier.Weak };
 
-    public Element ActiveSong    { get; private set; }
-    public int     CurrentIndex  { get; private set; }
-    public float   TimeRemaining { get; private set; }
-    private bool   isActive;
-
-    public event System.Action<int> OnKeyCorrect; // passes new index
-    public event System.Action      OnSuccess;
-    public event System.Action      OnFail;
-
-    void Awake()
-    {
-        if (Instance != null) { Destroy(gameObject); return; }
-        Instance = this;
-    }
-
-    public void StartInput(Element song)
-    {
-        ActiveSong    = song;
-        CurrentIndex  = 0;
-        TimeRemaining = FloorManager.Instance.GetInputTimeLimit();
-        isActive      = true;
-    }
-
-    public void StopInput() => isActive = false;
-
-    void Update()
-    {
-        if (!isActive) return;
-
-        TimeRemaining -= Time.deltaTime;
-        if (TimeRemaining <= 0) { Fail(); return; }
-
-        Dir? pressed = GetPressedDir();
-        if (pressed == null) return;
-
-        Dir[] sequence = Songs[ActiveSong];
-        if (pressed == sequence[CurrentIndex])
+        // Shuffle tiers
+        for (int i = tiers.Count - 1; i > 0; i--)
         {
-            CurrentIndex++;
-            OnKeyCorrect?.Invoke(CurrentIndex);
-            if (CurrentIndex >= sequence.Length) Success();
+            int j = Random.Range(0, i + 1);
+            (tiers[i], tiers[j]) = (tiers[j], tiers[i]);
         }
-        else
-        {
-            Fail();
-        }
+
+        for (int i = 0; i < elements.Count; i++)
+            Tiers[elements[i]] = tiers[i];
     }
 
-    void Success() { isActive = false; OnSuccess?.Invoke(); }
-    void Fail()    { isActive = false; OnFail?.Invoke(); }
-
-    Dir? GetPressedDir()
-    {
-        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))    return Dir.Up;
-        if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))  return Dir.Down;
-        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))  return Dir.Left;
-        if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) return Dir.Right;
-        return null;
-    }
+    public ResistanceTier Get(ElementType e) => Tiers[e];
 }
 ```
 
-- [ ] **7.3** Implement `CombatManager` — orchestrates the combat turn loop, applies damage, triggers enemy attacks, handles death.
+---
+
+### PHASE 6 — Spell Input System (LibroUI)
+> Day 3
+
+- [ ] **6.1** Define spell sequences as `SpellDefinition` ScriptableObjects: `ElementType`, `KeyCode[]` sequence, name, description.
+- [ ] **6.2** Implement `SpellInputHandler`:
+  - Active only during `InCombat` state.
+  - Tracks current input progress against all defined sequences.
+  - On match → raises `OnSpellCast(SpellDefinition)`.
+  - On wrong key → `OnInputError`.
+  - Optional: time window per turn (`RunManager.GetTurnTimeLimit()`).
+- [ ] **6.3** Implement `LibroUI`:
+  - Displays the 3 spell sequences with directional arrow icons.
+  - Highlights progress as keys are pressed.
+  - Shows a turn timer bar if timed turns are enabled.
+
+---
+
+### PHASE 7 — Combat System
+> Day 4
+
+- [ ] **7.1** Implement `PlayerStats` with HP, maxHP, base damage per element, defense.
+- [ ] **7.2** Implement `EnemyData` ScriptableObject: name, HP, base damage, ability weights.
+- [ ] **7.3** Implement `EnemyInstance`: holds runtime state (current HP, `EnemyResistance`, active DOTs), exposes `TakeDamage()`, `Act()`.
+- [ ] **7.4** Implement enemy `Act()` — chooses from 3 abilities based on weighted random:
+  - **Heal:** Restore X% of max HP.
+  - **DOT:** Apply a damage-over-time debuff to the player (ticks for N turns).
+  - **Power Strike:** Deal `baseDamage * 1.5` to player.
+- [ ] **7.5** Implement `CombatManager`:
+  - Transitions game to `InCombat`.
+  - Player turn: waits for `SpellInputHandler` to fire, applies damage with element multiplier.
+  - Enemy turn: calls `EnemyInstance.Act()`.
+  - On enemy death: drop gold/item (chance), return to `Exploring`.
+  - On player death: `GameManager.GameOver()`.
 
 ```csharp
-// Scripts/Combat/CombatManager.cs
+// Scripts/Combat/CombatManager.cs (skeleton)
 using UnityEngine;
 
 public class CombatManager : MonoBehaviour
 {
     public static CombatManager Instance { get; private set; }
-
-    public event System.Action<EnemyInstance> OnCombatStart;
-    public event System.Action                OnCombatEnd;
-
     private EnemyInstance currentEnemy;
-    private Element       selectedSong;
-    private const int     BaseDamage = 10;
 
     void Awake()
     {
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
-    }
-
-    void Start()
-    {
-        SongInputHandler.Instance.OnSuccess += HandleSuccess;
-        SongInputHandler.Instance.OnFail    += HandleFail;
     }
 
     public void StartCombat(EnemyInstance enemy)
     {
         currentEnemy = enemy;
         GameManager.Instance.SetState(GameState.InCombat);
-        OnCombatStart?.Invoke(enemy);
+        // Show combat UI, start player turn
     }
 
-    // Called by CombatUI when player presses a song button
-    public void SelectSong(Element song)
+    public void PlayerCastSpell(SpellDefinition spell)
     {
-        if (!PlayerStats.Instance.SpendMana()) { HandleFail(); return; } // out of mana = forced fail
-        selectedSong = song;
-        SongInputHandler.Instance.StartInput(song);
+        float mult = ElementSystem.GetMultiplier(currentEnemy.Resistance.Get(spell.Element));
+        int dmg = Mathf.RoundToInt(PlayerStats.Instance.GetSpellDamage(spell.Element) * mult);
+        currentEnemy.TakeDamage(dmg);
+        if (currentEnemy.IsDead) EndCombat(true);
+        else StartEnemyTurn();
     }
 
-    void HandleSuccess()
+    void StartEnemyTurn()
     {
-        int multiplier = ElementSystem.GetMultiplier(selectedSong, currentEnemy.data.element);
-        int damage     = PlayerStats.Instance.GetSongDamage(selectedSong, multiplier);
+        currentEnemy.Act(); // applies effect to player
+        if (PlayerStats.Instance.IsDead) GameManager.Instance.GameOver();
+        else StartPlayerTurn();
+    }
 
-        if (multiplier > 0)
+    void StartPlayerTurn()
+    {
+        // reset input handler, update UI
+    }
+
+    void EndCombat(bool playerWon)
+    {
+        if (playerWon)
         {
-            bool died = currentEnemy.TakeDamage(damage);
-            // Boss phase switch at half HP
-            if (currentEnemy.data.isBoss &&
-                currentEnemy.CurrentHP <= currentEnemy.data.maxHP / 2 &&
-                currentEnemy.data.secondPhaseElement != currentEnemy.data.element)
-            {
-                currentEnemy.data.element = currentEnemy.data.secondPhaseElement;
-                CombatUIController.Instance.ShowPhaseChange();
-            }
-            if (died) { EnemySpawner.Instance.RemoveEnemy(currentEnemy); EndCombat(); return; }
+            currentEnemy.DropLoot();
+            EnemySpawner.Instance.RemoveEnemy(currentEnemy);
         }
-
-        PlayerStats.Instance.RegenerateMana();
-        CombatUIController.Instance.ShowResult(multiplier, damage);
-
-        if (multiplier != 2) EnemyAttacks(); // not super effective = enemy counter-attacks
-    }
-
-    void HandleFail()
-    {
-        PlayerStats.Instance.RegenerateMana();
-        CombatUIController.Instance.ShowFailFeedback();
-        EnemyAttacks();
-    }
-
-    void EnemyAttacks()
-    {
-        int dmg = currentEnemy.data.attackDamage;
-        if (PlayerStats.Instance.HasEarplugs) dmg = Mathf.Max(1, dmg - 2);
-        bool dead = PlayerStats.Instance.TakeDamage(dmg);
-        if (dead) { GameManager.Instance.GameOver(); return; }
-        CombatUIController.Instance.ShowNewTurn();
-    }
-
-    public void EndCombat()
-    {
         GameManager.Instance.SetState(GameState.Exploring);
-        OnCombatEnd?.Invoke();
-    }
-
-    public void AttemptFlee()
-    {
-        if (UnityEngine.Random.value < 0.4f) EndCombat();
-        else EnemyAttacks();
     }
 }
 ```
-
-- [ ] **7.4** Test: trigger combat, select a song, input correct sequence → enemy takes damage. Input wrong key → enemy attacks. Verify enemy death removes it from dungeon.
 
 ---
 
-### PHASE 8 — Player Stats & Items
-> Day 4
-
-- [ ] **8.1** Implement `PlayerStats` singleton with `HP`, `Mana`, `TakeDamage()`, `RestoreHP()`, `SpendMana()`, `RegenerateMana()`, passive item flags.
-
-```csharp
-// Scripts/Player/PlayerStats.cs
-using UnityEngine;
-
-public class PlayerStats : MonoBehaviour
-{
-    public static PlayerStats Instance { get; private set; }
-
-    [Header("Base Stats")]
-    public int maxHP       = 30;
-    public int maxMana     = 20;
-    public int songManaCost = 3;
-
-    public int CurrentHP   { get; private set; }
-    public int CurrentMana { get; private set; }
-
-    public bool    HasEarplugs   { get; private set; }
-    public Element BonusElement  { get; private set; } = (Element)(-1);
-    public bool    HasSheetMusic => (int)BonusElement >= 0;
-
-    public event System.Action OnStatsChanged;
-
-    void Awake()
-    {
-        if (Instance != null) { Destroy(gameObject); return; }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
-
-    void Start() { CurrentHP = maxHP; CurrentMana = maxMana; }
-
-    public bool TakeDamage(int amount)
-    {
-        CurrentHP = Mathf.Max(0, CurrentHP - amount);
-        OnStatsChanged?.Invoke();
-        return CurrentHP <= 0;
-    }
-
-    public void RestoreHP(int amount)
-    {
-        CurrentHP = Mathf.Min(maxHP, CurrentHP + amount);
-        OnStatsChanged?.Invoke();
-    }
-
-    public void RestoreMana(int amount)
-    {
-        CurrentMana = Mathf.Min(maxMana, CurrentMana + amount);
-        OnStatsChanged?.Invoke();
-    }
-
-    public bool SpendMana()
-    {
-        if (CurrentMana < songManaCost) return false;
-        CurrentMana -= songManaCost;
-        OnStatsChanged?.Invoke();
-        return true;
-    }
-
-    public void RegenerateMana()
-    {
-        CurrentMana = Mathf.Min(maxMana, CurrentMana + 2);
-        OnStatsChanged?.Invoke();
-    }
-
-    public void ApplyEarplugs()            { HasEarplugs = true;    OnStatsChanged?.Invoke(); }
-    public void ApplySheetMusic(Element e) { BonusElement = e;      OnStatsChanged?.Invoke(); }
-
-    public int GetSongDamage(Element song, int multiplier)
-    {
-        int bonus = (HasSheetMusic && song == BonusElement) ? 5 : 0;
-        return (10 + bonus) * multiplier;
-    }
-}
-```
-
-- [ ] **8.2** Create `ItemData` ScriptableObject.
-
-```csharp
-// Scripts/Items/ItemData.cs
-using UnityEngine;
-
-public enum ItemType { HealthPotion, LuteString, SheetMusic, Earplugs }
-
-[CreateAssetMenu(menuName = "DCJam/ItemData")]
-public class ItemData : ScriptableObject
-{
-    public string   itemName;
-    public ItemType type;
-    public Element  elementBonus;  // only used if type == SheetMusic
-    public Sprite   icon;
-    public int      restoreAmount; // for HealthPotion and LuteString
-}
-```
-
-- [ ] **8.3** Create item assets: `HealthPotion` (restore 10 HP), `LuteString` (restore 8 mana), `SheetMusic_Fire/Water/Earth/Wind`, `Earplugs`.
-- [ ] **8.4** Implement `ItemPickup` — exists in dungeon, collected on player step.
-
-```csharp
-// Scripts/Items/ItemPickup.cs
-using UnityEngine;
-
-public class ItemPickup : MonoBehaviour
-{
-    public ItemData  data;
-    public Vector2Int GridPos;
-
-    public void Collect()
-    {
-        switch (data.type)
-        {
-            case ItemType.HealthPotion: PlayerStats.Instance.RestoreHP(data.restoreAmount);     break;
-            case ItemType.LuteString:  PlayerStats.Instance.RestoreMana(data.restoreAmount);    break;
-            case ItemType.SheetMusic:  PlayerStats.Instance.ApplySheetMusic(data.elementBonus); break;
-            case ItemType.Earplugs:    PlayerStats.Instance.ApplyEarplugs();                    break;
-        }
-        ItemSpawner.Instance.RemoveItem(this);
-        Destroy(gameObject);
-    }
-}
-```
-
-- [ ] **8.5** Implement `ItemSpawner` (mirrors `EnemySpawner` — spawn items from `DungeonData`, provide `GetItemAt()`, `RemoveItem()`).
-
----
-
-### PHASE 9 — Combat UI
-> Day 4–5
-
-**Why:** Most visible system. Build functional first, polish last.
-
-- [ ] **9.1** Build combat screen Canvas hierarchy in Unity editor:
-
-```
-Canvas (Screen Space - Overlay)
-  └── CombatPanel (full screen, semi-transparent dark background)
-       ├── EnemySprite        (Image)
-       ├── EnemyNameText      (TMP)
-       ├── EnemyHPBar         (Slider)
-       ├── ElementLabel       ("ELEMENT: FIRE")
-       ├── CounterLabel       ("CASTING: WATER")
-       ├── SequenceDisplay
-       │    └── 6x KeyIcon    (Image — arrow sprites, gray=unlit, white=hit)
-       ├── TimerBar           (Slider, red fill)
-       ├── SongButtons        (4 Buttons: Fire / Water / Earth / Wind)
-       ├── FleeButton
-       └── ResultText         ("RESONANT!", "HIT!", "NO EFFECT...", "WRONG KEYS!")
-```
-
-- [ ] **9.2** Implement `CombatUIController` — subscribes to `CombatManager` and `SongInputHandler` events, drives all UI updates.
-
-```csharp
-// Scripts/UI/CombatUIController.cs
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-
-public class CombatUIController : MonoBehaviour
-{
-    public static CombatUIController Instance { get; private set; }
-
-    [Header("Panels")]
-    public GameObject combatPanel;
-
-    [Header("Enemy Info")]
-    public Image            enemySprite;
-    public TextMeshProUGUI  enemyNameText;
-    public Slider           enemyHPSlider;
-    public TextMeshProUGUI  elementLabel;
-
-    [Header("Sequence Display")]
-    public Image[]          keyIcons;      // 6 icons
-    public Sprite[]         dirSprites;    // index: 0=Up 1=Down 2=Left 3=Right
-    public TextMeshProUGUI  counterLabel;
-
-    [Header("Timer & Feedback")]
-    public Slider           timerBar;
-    public TextMeshProUGUI  resultText;
-
-    [Header("Buttons")]
-    public GameObject       songButtonsGroup;
-
-    private EnemyInstance   activeEnemy;
-
-    void Awake()
-    {
-        if (Instance != null) { Destroy(gameObject); return; }
-        Instance = this;
-        combatPanel.SetActive(false);
-    }
-
-    void Start()
-    {
-        CombatManager.Instance.OnCombatStart += ShowCombat;
-        CombatManager.Instance.OnCombatEnd   += HideCombat;
-        SongInputHandler.Instance.OnKeyCorrect += UpdateSequenceDisplay;
-    }
-
-    void Update()
-    {
-        if (GameManager.Instance.CurrentState != GameState.InCombat) return;
-        timerBar.value = SongInputHandler.Instance.TimeRemaining
-                       / FloorManager.Instance.GetInputTimeLimit();
-    }
-
-    void ShowCombat(EnemyInstance enemy)
-    {
-        activeEnemy             = enemy;
-        combatPanel.SetActive(true);
-        enemySprite.sprite      = enemy.data.sprite;
-        enemyNameText.text      = enemy.data.enemyName;
-        enemyHPSlider.maxValue  = enemy.data.maxHP;
-        enemyHPSlider.value     = enemy.CurrentHP;
-        elementLabel.text       = $"ELEMENT: {enemy.data.element}";
-        resultText.text         = "";
-        songButtonsGroup.SetActive(true);
-    }
-
-    void HideCombat() => combatPanel.SetActive(false);
-
-    // Wired to each song button's OnClick in the inspector — pass 0/1/2/3
-    public void OnSongSelected(int elementIndex)
-    {
-        Element e          = (Element)elementIndex;
-        string counterName = ElementSystem.GetCounter(activeEnemy.data.element).ToString();
-        counterLabel.text  = $"COUNTER: {counterName} | CASTING: {e}";
-        BuildSequenceDisplay(e);
-        songButtonsGroup.SetActive(false);
-        CombatManager.Instance.SelectSong(e);
-    }
-
-    void BuildSequenceDisplay(Element e)
-    {
-        var seq = SongInputHandler.Songs[e];
-        for (int i = 0; i < keyIcons.Length; i++)
-        {
-            keyIcons[i].sprite = dirSprites[(int)seq[i]];
-            keyIcons[i].color  = Color.gray;
-        }
-    }
-
-    void UpdateSequenceDisplay(int newIndex)
-    {
-        for (int i = 0; i < newIndex; i++)
-            keyIcons[i].color = Color.white;
-    }
-
-    public void ShowResult(int multiplier, int damage)
-    {
-        resultText.text = multiplier switch
-        {
-            2 => $"RESONANT!  -{damage} HP",
-            1 => $"HIT!  -{damage} HP",
-            0 => "NO EFFECT...",
-            _ => ""
-        };
-        enemyHPSlider.value = activeEnemy.CurrentHP;
-        Invoke(nameof(ReEnableSongButtons), 1.2f);
-    }
-
-    public void ShowFailFeedback()
-    {
-        resultText.text = "WRONG KEYS!";
-        Invoke(nameof(ReEnableSongButtons), 1.2f);
-    }
-
-    public void ShowNewTurn()
-    {
-        enemyHPSlider.value = activeEnemy != null ? activeEnemy.CurrentHP : 0;
-        Invoke(nameof(ReEnableSongButtons), 1.2f);
-    }
-
-    public void ShowPhaseChange()
-    {
-        resultText.text    = "— SECOND PHASE! —";
-        elementLabel.text  = $"ELEMENT: {activeEnemy.data.element}";
-    }
-
-    void ReEnableSongButtons()
-    {
-        resultText.text = "";
-        songButtonsGroup.SetActive(true);
-    }
-}
-```
-
-- [ ] **9.3** Wire song button `OnClick` events in inspector to `OnSongSelected(0/1/2/3)`.
-- [ ] **9.4** Add a **Tab-toggleable reference card** overlay showing all 4 song sequences so players don't have to memorize them.
-- [ ] **9.5** Test full combat loop end to end: open combat → select element → input sequence → result shown → new turn → enemy dies → return to exploration.
-
----
-
-### PHASE 10 — HUD & Floor Wiring
+### PHASE 8 — Equipment System
 > Day 5
 
-- [ ] **10.1** Build HUD Canvas (always visible during exploration): HP bar, Mana bar, Floor number label. Subscribe to `PlayerStats.OnStatsChanged` to update bars.
-- [ ] **10.2** Implement `DungeonOrchestrator` — single script that wires together generation, rendering, and spawning on scene start and floor transition.
+- [ ] **8.1** Create `EquipmentSlot` enum: `Head`, `Chest`, `Legs`, `Feet`, `Feather`.
+- [ ] **8.2** Create `EquipmentData` ScriptableObject: slot, stat bonuses (HP, defense, spell damage per element, gold find, etc.).
+- [ ] **8.3** Implement `EquipmentManager` on Player: holds one `EquipmentData` per slot, exposes `Equip()`, `GetStatBonus()`.
+- [ ] **8.4** `PlayerStats` reads bonuses from `EquipmentManager` when calculating damage, defense, max HP.
 
-```csharp
-// Scripts/Core/DungeonOrchestrator.cs
-using UnityEngine;
+---
 
-public class DungeonOrchestrator : MonoBehaviour
-{
-    void Start() => GenerateFloor();
+### PHASE 9 — NPCs
+> Day 5
 
-    public void GenerateFloor()
-    {
-        DungeonData data = BSPGenerator.Instance.Generate();
-        DungeonRenderer.Instance.Render(data);
-        EnemySpawner.Instance.SpawnEnemies(data, FloorManager.Instance.CurrentFloor);
-        ItemSpawner.Instance.SpawnItems(data);
-        FindObjectOfType<GridMover>().SetGridPosition(data.PlayerSpawn);
-    }
-}
+#### Vendor
+
+- [ ] **9.1** Implement `VendorNPC`:
+  - Generates a stock of 3–4 random `EquipmentData` items on floor generation.
+  - `OpenShop()` triggers `ShopUI` and sets state to `Shopping`.
+  - Player can buy items with gold (`RunManager.SpendGold()`).
+
+#### Beggar
+
+- [ ] **9.2** Implement `BeggarNPC`:
+  - `Interact()` prompts "Give 1 gold?" 
+  - If player has gold and accepts: `RunManager.SpendGold(1)`, roll outcome:
+    - 40% → Give random buff or item.
+    - 30% → Nothing.
+    - 30% → Stab player for 30–40% of max HP.
+  - One interaction per floor.
+
+---
+
+### PHASE 10 — Buff System
+> Day 6
+
+- [ ] **10.1** Create `BuffData` ScriptableObject: display name, description, effect type (enum), value.
+- [ ] **10.2** Create a `BuffPool` with 15–20 buff definitions.
+- [ ] **10.3** Implement `BuffSystem` on Player: stores active buffs, exposes `ApplyBuff()`, `GetBonusFor()`.
+- [ ] **10.4** Implement `BuffSelectionUI`: triggered when `GameState == BuffSelection`. Shows 3 random `BuffData` cards. On selection, calls `BuffSystem.ApplyBuff()` then triggers next floor generation.
+
+Example buffs:
+```
++15% Asonante damage
++15% Discordante damage
++15% Consonante damage
++20 max HP
++10 base defense
+-25% DOT duration received
++1 gold per kill
+Heal 20 HP on combat start
 ```
 
-- [ ] **10.3** Implement death condition: `PlayerStats.TakeDamage()` returns `true` → `GameManager.GameOver()` → load `GameOver` scene.
-- [ ] **10.4** Implement win condition: `FloorManager.NextFloor()` exceeds `MaxFloors` → `GameManager.Victory()` → show victory screen.
-- [ ] **10.5** Test permadeath reset: die, reach game over screen, start new run, verify dungeon regenerates fresh and player stats reset.
-
 ---
 
-### PHASE 11 — Main Menu & Game Over Screen
+### PHASE 11 — Mini-Boss & Dragon Boss
 > Day 6
 
-- [ ] **11.1** Build `MainMenu` scene: title, **Start** button (`GameManager.Instance.StartNewRun()`), basic credits.
-- [ ] **11.2** Build `GameOver` scene: "YOU FELL" message, floor reached, **Try Again** button.
-- [ ] **11.3** Build `Victory` state (can reuse `GameOver` scene with different text): "THE DUNGEON IS PURGED" message.
+#### Mini-Boss
+
+- [ ] **11.1** Mini-boss is a regular `EnemyData` with `IsMini = true` flag: HP ×2.5, damage ×2.
+- [ ] **11.2** `BSPGenerator` tags the room before the stairs as `MiniBoss`. `EnemySpawner` places a mini-boss there.
+- [ ] **11.3** Stairs tile is **locked** until mini-boss is defeated (`EnemySpawner.IsRoomClear(StairsAdjacentRoom)`).
+
+#### Dragon Boss
+
+- [ ] **11.4** Create `DragonBossData` ScriptableObject: high HP, damage, phase thresholds `[0.75, 0.50, 0.25]`.
+- [ ] **11.5** Implement `DragonBossInstance extends EnemyInstance`:
+  - On `TakeDamage()`: check if HP crossed a 25% threshold → rotate resistance profile.
+  - Resistance rotates in order: profile A → B → C → D (4 profiles, each with a different immune element cycling through).
+  - Only damage abilities (Power Strike × 3 variants with different elements), no healing.
+- [ ] **11.6** Dragon spawns on Floor 5. Victory triggers on Dragon death.
 
 ---
 
-### PHASE 12 — Audio
-> Day 6
-
-- [ ] **12.1** Implement `AudioManager` singleton with `PlaySFX(AudioClip)` and `PlayMusic(AudioClip, bool loop)`.
-- [ ] **12.2** Source audio from **freesound.org** or **opengameart.org** — search for:
-  - `key_correct` — short positive chime
-  - `key_wrong` — short buzz/dissonant hit
-  - `combat_win` — fanfare sting
-  - `combat_hit` — impact sound
-  - `player_hurt` — grunt or negative tone
-  - `footstep` — stone step
-  - `floor_change` — ascending tone / transition
-  - `music_explore` — looping ambient dungeon track
-  - `music_combat` — looping tense combat track
-- [ ] **12.3** Hook `AudioManager.PlaySFX()` calls into: `SongInputHandler.OnKeyCorrect`, `SongInputHandler.OnFail`, `CombatManager.EndCombat()`, `PlayerStats.TakeDamage()`.
-- [ ] **12.4** Swap music on `GameManager.OnStateChanged` between `Exploring` and `InCombat`.
-
----
-
-### PHASE 13 — Polish & Build
+### PHASE 12 — HUD, Audio & Polish
 > Day 7
 
-- [ ] **13.1** Replace placeholder geometry with final art (or at least add textures/materials to wall/floor prefabs).
-- [ ] **13.2** Add colored particle VFX prefabs for each element (`VFX_Fire`, `VFX_Water`, `VFX_Earth`, `VFX_Wind`) — attach to enemy instances in dungeon.
-- [ ] **13.3** Verify all jam rules are met:
-  - [x] First-person exploration
-  - [x] Step movement on square grid
-  - [x] 90-degree turns via keyboard
-  - [x] Player character with stats
-  - [x] Combat mechanic
-  - [x] Win condition (defeat floor 5 boss)
-  - [x] Death condition (HP = 0)
-  - [x] Stat modifier (potions, items)
-  - [x] Theme interpretation (Elemental RPS)
-- [ ] **13.4** Set build target to **WebGL** in `Project Settings → Player`.
-- [ ] **13.5** Test WebGL build locally using a local server (`python -m http.server` in build folder).
-- [ ] **13.6** Upload to itch.io — mark as WebGL, set viewport size to `960x600`.
-- [ ] **13.7** Write itch.io page description: explain song mechanic and element cycle clearly. Include the reference card as a screenshot.
+- [ ] **12.1** HUD: HP bar, current floor, gold count, active buff icons, DOT indicator.
+- [ ] **12.2** Main menu scene with Start / Quit.
+- [ ] **12.3** Game Over screen: floor reached, prompt to restart.
+- [ ] **12.4** Victory screen: congratulations, run stats.
+- [ ] **12.5** Audio: ambient dungeon loop, spell cast SFX per element type, enemy hurt/death, NPC interaction sounds.
+- [ ] **12.6** WebGL build — test in browser, upload.
 
 ---
 
-## Unity Editor Setup Guide
+## Notes & Open Questions
 
-Follow these steps after all scripts are written and Unity has compiled without errors.
-
----
-
-### Step 0 — Prerequisites
-
-1. **TextMeshPro**: Window → TextMeshPro → Import TMP Essential Resources
-2. **DOTween**: already installed under `Assets/Plugins/Demigiant/`; if not, run the DOTween Setup from the Tools menu after import
-3. **Build Settings** (File → Build Settings): add scenes in this exact order:
-   - `Assets/Scenes/MainMenu` (index 0)
-   - `Assets/Scenes/Game` (index 1)
-   - `Assets/Scenes/GameOver` (index 2)
+- **Turn timing:** Fully static turns (no timer) is the safe fallback. Add timer only if time permits.
+- **Dragon resistance rotation:** Needs playtesting — 4 phases with different immune elements means the player may need to swap spell types mid-fight. Ensure all 3 spell types remain useful.
+- **Beggar balance:** 30% stab chance is punishing. May need to tune if playtesters never interact with the Beggar.
+- **Buff count:** A 5-floor run = 4 buff selections. With 15–20 buff definitions, repetition is possible. Add a "no duplicates" check if time permits.
 
 ---
 
-### Step 1 — Create Scenes
+## Unity Wiring Guide
 
-1. File → New Scene → save as `Assets/Scenes/MainMenu`
-2. File → New Scene → save as `Assets/Scenes/Game`
-3. File → New Scene → save as `Assets/Scenes/GameOver`
+### 1. Scenes
 
----
+Create and save 4 scenes, add all to **File → Build Settings** in this order:
 
-### Step 2 — Create Dungeon Prefabs
+| Index | Scene |
+|-------|-------|
+| 0 | MainMenu |
+| 1 | Game |
+| 2 | GameOver |
+| 3 | Victory |
 
-Open the `Game` scene. Create these primitive prefabs and save them to `Assets/Prefabs/Dungeon/`:
-
-| Prefab | How to make |
-|--------|-------------|
-| **Wall** | 3D Object → Cube; Scale `(4, 4, 0.2)`; gray material |
-| **Floor** | 3D Object → Plane; Scale `(0.4, 1, 0.4)`; dark gray material |
-| **Ceiling** | Duplicate Floor; Rotation `(180, 0, 0)`; slightly lighter material |
-| **Stairs** | 3D Object → Cube; Scale `(2, 0.3, 2)`; yellow material |
-
-Drag each into `Assets/Prefabs/Dungeon/` to save as a prefab, then delete from scene.
+Scene name strings in code (`SceneManager.LoadScene(...)`) must match exactly.
 
 ---
 
-### Step 3 — Create the Enemy Prefab
+### 2. Persistent Singletons GameObject
 
-1. Hierarchy → Create Empty → name it `EnemyPrefab`
-2. Add Component → `EnemyInstance`
-3. Drag to `Assets/Prefabs/Enemies/EnemyPrefab`; delete from scene
+In the **Game** scene, create one empty GameObject named `_Managers`. Add all of these components to it:
 
----
+- `GameManager`
+- `FloorManager`
+- `PlayerStats`
+- `AudioManager`
+- `VendorNPC`
+- `BeggarNPC`
 
-### Step 4 — Create the Item Pickup Prefab
+For `AudioManager`, add two child GameObjects (`SFX`, `Music`), each with an `AudioSource`. Wire them to `Sfx Source` and `Music Source` in the inspector, then assign all audio clips.
 
-1. Hierarchy → 3D Object → Sphere → name it `ItemPickupPrefab`; scale `(0.5, 0.5, 0.5)`
-2. Add Component → `ItemPickup`
-3. Drag to `Assets/Prefabs/Items/ItemPickupPrefab`; delete from scene
-
----
-
-### Step 5 — Create ScriptableObject Assets
-
-#### Enemy Data (`Assets/ScriptableObjects/Enemies/`)
-
-Right-click in the folder → Create → DCJam → EnemyData. Create one asset per enemy:
-
-| Asset name | enemyName | element | maxHP | attackDamage | isBoss |
-|-----------|-----------|---------|-------|-------------|--------|
-| FireDemon | Fire Demon | Fire | 20 | 5 | false |
-| WaterDemon | Water Demon | Water | 20 | 5 | false |
-| EarthDemon | Earth Demon | Earth | 20 | 5 | false |
-| WindDemon | Wind Demon | Wind | 20 | 5 | false |
-| FloorBoss | Floor Guardian | Fire | 40 | 8 | true |
-| FinalBoss | Demon Lord | Fire | 60 | 10 | true (secondPhaseElement = Wind) |
-
-#### Item Data (`Assets/ScriptableObjects/Items/`)
-
-Right-click → Create → DCJam → ItemData:
-
-| Asset name | itemName | type | restoreAmount |
-|-----------|----------|------|--------------|
-| HealthPotion | Health Potion | HealthPotion | 10 |
-| LuteString | Lute String | LuteString | 8 |
-| SheetMusic_Fire | Fire Sheet Music | SheetMusic | 0 (elementBonus = Fire) |
-| SheetMusic_Water | Water Sheet Music | SheetMusic | 0 (elementBonus = Water) |
-| SheetMusic_Earth | Earth Sheet Music | SheetMusic | 0 (elementBonus = Earth) |
-| SheetMusic_Wind | Wind Sheet Music | SheetMusic | 0 (elementBonus = Wind) |
-| Earplugs | Earplugs | Earplugs | 0 |
+`_Managers` uses `DontDestroyOnLoad` and persists for the entire session.
 
 ---
 
-### Step 6 — Set Up the Game Scene
-
-Open the `Game` scene. Create all GameObjects below.
-
-#### 6.1 — Singletons GameObject
-
-1. Hierarchy → Create Empty → name `_Singletons`
-2. Add Components: `GameManager`, `FloorManager`
-
-#### 6.2 — Player
-
-1. Hierarchy → Create Empty → name `Player`; Position `(0, 0, 0)`
-2. Add Component → `GridMover`
-3. Add Component → `PlayerStats`
-4. Inside `Player`, right-click → Create Empty → name `Camera`; Position `(0, 0, 0)`
-5. On the `Camera` child, Add Component → `Camera`
-6. Set Camera **Field of View** to `70`
-7. Set Camera **Clipping Planes Near** to `0.1`, **Far** to `200`
-
-#### 6.3 — Dungeon Systems
-
-Create these GameObjects (all at root level, position `(0,0,0)`):
-
-**BSPGenerator**
-- Create Empty → name `BSPGenerator`
-- Add Component → `BSPGenerator`
-- Leave default values (mapWidth=40, mapHeight=40, enemiesPerFloor=6, itemsPerFloor=4)
-
-**DungeonRenderer**
-- Create Empty → name `DungeonRenderer`
-- Add Component → `DungeonRenderer`
-- Assign prefabs: Wall, Floor, Ceiling, Stairs from `Assets/Prefabs/Dungeon/`
-
-**DungeonOrchestrator**
-- Create Empty → name `DungeonOrchestrator`
-- Add Component → `DungeonOrchestrator`
-
-#### 6.4 — Enemy & Item Spawners
-
-**EnemySpawner**
-- Create Empty → name `EnemySpawner`
-- Add Component → `EnemySpawner`
-- **basicEnemies** (size 4): assign FireDemon, WaterDemon, EarthDemon, WindDemon
-- **bossFinalData**: assign FinalBoss
-- **enemyPrefab**: assign `Assets/Prefabs/Enemies/EnemyPrefab`
-
-**ItemSpawner**
-- Create Empty → name `ItemSpawner`
-- Add Component → `ItemSpawner`
-- **itemPool** (size 7): assign all 7 item SOs
-- **itemPickupPrefab**: assign `Assets/Prefabs/Items/ItemPickupPrefab`
-
-#### 6.5 — Combat Systems
-
-**CombatSystems**
-- Create Empty → name `CombatSystems`
-- Add Component → `CombatManager`
-- Add Component → `SongInputHandler`
-
-#### 6.6 — Audio
-
-**AudioManager**
-- Create Empty → name `AudioManager`
-- Add Component → `AudioManager`
-- Add Component → `AudioSource` (×2); assign one to **sfxSource**, one to **musicSource**
-- Assign audio clips once you have them (see Phase 12 in the cut list above)
-
----
-
-### Step 7 — Combat UI Canvas
-
-In the `Game` scene:
-
-1. Hierarchy → UI → Canvas → name `CombatCanvas`; set **Render Mode** to Screen Space - Overlay
-2. Inside Canvas, create the following hierarchy:
+### 3. Game Scene Hierarchy
 
 ```
-CombatCanvas
-  └── CombatPanel (UI → Panel; anchors = stretch-stretch)
-       ├── EnemySprite      (UI → Image)
-       ├── EnemyNameText    (UI → Text - TextMeshPro)
-       ├── EnemyHPBar       (UI → Slider; Interactable = OFF)
-       ├── ElementLabel     (UI → Text - TextMeshPro)
-       ├── CounterLabel     (UI → Text - TextMeshPro)
-       ├── SequenceDisplay  (UI → Empty; add 6 child Images for key icons)
-       ├── TimerBar         (UI → Slider; Interactable = OFF)
-       ├── SongButtons      (UI → Empty)
-       │    ├── FireButton   (UI → Button; label "Fire")
-       │    ├── WaterButton  (UI → Button; label "Water")
-       │    ├── EarthButton  (UI → Button; label "Earth")
-       │    └── WindButton   (UI → Button; label "Wind")
-       ├── FleeButton       (UI → Button; label "Flee")
-       └── ResultText       (UI → Text - TextMeshPro)
+_Managers               ← persistent singletons
+_Dungeon
+  BSPGenerator          ← BSPGenerator component
+  DungeonRenderer       ← DungeonRenderer component
+  DungeonOrchestrator   ← DungeonOrchestrator component
+  EnemySpawner          ← EnemySpawner component
+  ItemSpawner           ← ItemSpawner component
+  Combat                ← CombatManager + SongInputHandler components
+Player                  ← GridMover component
+  Main Camera           ← tag: MainCamera, FOV: 73, local pos (0,0,0)
+Canvas                  ← Screen Space Overlay, CanvasScaler 1920×1080
+  HUD
+  CombatPanel
+  BuffSelectionPanel
+  ShopPanel
+  BeggarPanel
+EventSystem
 ```
-
-3. Create Empty at root of Canvas → name `CombatUIController`; Add Component → `CombatUIController`
-4. Assign all fields in the Inspector:
-   - **combatPanel** → `CombatPanel`
-   - **enemySprite** → `EnemySprite` Image
-   - **enemyNameText** → `EnemyNameText` TMP
-   - **enemyHPSlider** → `EnemyHPBar` Slider
-   - **elementLabel** → `ElementLabel` TMP
-   - **counterLabel** → `CounterLabel` TMP
-   - **keyIcons** (size 6) → the 6 child Images inside `SequenceDisplay`
-   - **dirSprites** (size 4) → arrow sprites (Up, Down, Left, Right) — create simple arrows or import from free assets
-   - **timerBar** → `TimerBar` Slider
-   - **resultText** → `ResultText` TMP
-   - **songButtonsGroup** → `SongButtons` GameObject
-
-5. Wire song button OnClick events:
-   - FireButton → OnClick → `CombatUIController.OnSongSelected(0)`
-   - WaterButton → OnClick → `CombatUIController.OnSongSelected(1)`
-   - EarthButton → OnClick → `CombatUIController.OnSongSelected(2)`
-   - WindButton → OnClick → `CombatUIController.OnSongSelected(3)`
-6. FleeButton → OnClick → `CombatManager.AttemptFlee()`
 
 ---
 
-### Step 8 — HUD Canvas
+### 4. ScriptableObjects to Create
 
-1. Hierarchy → UI → Canvas → name `HUDCanvas`
-2. Inside HUDCanvas:
+#### EnemyData — right-click → Create → Mockery → EnemyData
 
-```
-HUDCanvas
-  ├── HPBar    (UI → Slider; Interactable = OFF; anchor top-left)
-  ├── ManaBar  (UI → Slider; Interactable = OFF; anchor top-left, below HP)
-  └── FloorLabel (UI → Text - TextMeshPro; anchor top-right)
-```
+| Asset | enemyName | maxHP | attackDamage | isBoss | healW | dotW | powerW | goldMin | goldMax | dropChance |
+|-------|-----------|-------|--------------|--------|-------|------|--------|---------|---------|------------|
+| Enemy_Grito | Grito Demoniaco | 20 | 5 | false | 0.2 | 0.4 | 0.4 | 2 | 6 | 0.25 |
+| Enemy_Susurro | Susurro Maldito | 15 | 7 | false | 0.2 | 0.4 | 0.4 | 2 | 5 | 0.25 |
+| Enemy_Eco | Eco del Abismo | 25 | 4 | false | 0.3 | 0.3 | 0.4 | 3 | 7 | 0.3 |
+| Enemy_Dragon | El Dragon | 120 | 15 | true | 0 | 0.3 | 0.7 | 0 | 0 | 0 |
 
-3. Create Empty → name `HUDController`; Add Component → `HUDController`
-4. Assign: **hpBar**, **manaBar**, **floorLabel**
+#### ItemData — right-click → Create → Mockery → ItemData
 
----
+| Asset | itemName | slot | stat bonus | buyPrice |
+|-------|----------|------|------------|----------|
+| Item_SombreroRoto | Sombrero Roto | Head | hpBonus=5 | 4 |
+| Item_TunicaVieja | Túnica Vieja | Chest | defenseBonus=2 | 5 |
+| Item_PantalonRemendado | Pantalón Remendado | Legs | hpBonus=3, defenseBonus=1 | 4 |
+| Item_ZapatosDeBardo | Zapatos de Bardo | Feet | asonanteBonus=3 | 5 |
+| Item_PlumaDelDiablo | Pluma del Diablo | Feather | discordanteBonus=5 | 8 |
+| Item_PlumaDeLuz | Pluma de Luz | Feather | consonanteBonus=5 | 8 |
 
-### Step 9 — Set Up the MainMenu Scene
+#### BuffData — right-click → Create → Mockery → BuffData
 
-Open `MainMenu` scene.
+| Asset | buffName | effectType | element | value |
+|-------|----------|------------|---------|-------|
+| Buff_HP | Alma Robusta | HPBonus | — | 15 |
+| Buff_Def | Piel Gruesa | DefenseBonus | — | 3 |
+| Buff_Ason | Voz Asonante | SpellDamageBonus | Asonante | 5 |
+| Buff_Disc | Cacofonía | SpellDamageBonus | Discordante | 5 |
+| Buff_Cons | Armonía Pura | SpellDamageBonus | Consonante | 5 |
+| Buff_DOT | Resistencia al Veneno | DOTResistance | — | 2 |
+| Buff_Heal | Adrenalina | HealOnCombatStart | — | 8 |
+| Buff_Gold | Dedos de Oro | GoldBonus | — | 2 |
 
-1. UI → Canvas → inside it:
-   - TMP Text: "BARD DUNGEON" (title)
-   - Button: "START" → OnClick → (runtime) `GameManager.Instance.StartNewRun()` — wire via a small `MainMenuUI` script:
-
-```csharp
-// Scripts/UI/MainMenuUI.cs
-using UnityEngine;
-using UnityEngine.UI;
-
-public class MainMenuUI : MonoBehaviour
-{
-    public Button startButton;
-    void Start() => startButton.onClick.AddListener(() => GameManager.Instance.StartNewRun());
-}
-```
-
-2. Add `MainMenuUI` to a GameObject; assign `startButton`.
+Fill in `description` on each — shown in `BuffSelectionUI`.
 
 ---
 
-### Step 10 — Set Up the GameOver Scene
+### 5. Prefabs
 
-Open `GameOver` scene.
+#### EnemyPrefab
+- Empty GameObject + `EnemyInstance` component
+- Optional: child SpriteRenderer for in-world representation
+- Save to `Prefabs/Enemies/`
 
-1. UI → Canvas → inside it:
-   - TMP Text: name `MessageText`
-   - TMP Text: name `FloorText`
-   - Button: name `TryAgainButton`, label "Try Again"
-2. Create Empty → Add Component → `GameOverUI`
-3. Assign **messageText**, **floorText**, **tryAgainButton**
+#### ItemPickupPrefab
+- Empty GameObject + `ItemPickup` component
+- Child: small cube or sprite so it's visible in the dungeon
+- Save to `Prefabs/Items/`
+
+#### Dungeon tile prefabs (save to `Prefabs/Dungeon/`)
+
+| Prefab | Setup |
+|--------|-------|
+| WallPrefab | Quad facing +Z, 4u × 4u |
+| FloorPrefab | Quad rotated −90° X, 4u × 4u |
+| CeilingPrefab | Same as floor (renderer flips on spawn) |
+| StairsPrefab | Any visual marker — ramp or colored tile |
 
 ---
 
-### Step 11 — Final Checks Before Play
+### 6. Inspector Field Wiring
 
-- [ ] All three scenes added to Build Settings (File → Build Settings → Add Open Scenes)
-- [ ] `Game` scene is the active/start scene during development (index 1 in build, but set as default for editor play)
-- [ ] DOTween initialized (should happen automatically via `GameManager.Awake()`)
-- [ ] No missing references (red fields) in any Inspector
-- [ ] Press **Play** in the `Game` scene — dungeon should generate, player should move with WASD/arrows
+#### BSPGenerator
+```
+Map Width          40
+Map Height         40
+Min Leaf Size       8
+Max Leaf Size      16
+Enemies Per Floor   4
+Items Per Floor     3
+```
+
+#### DungeonRenderer
+```
+Wall Prefab    → WallPrefab
+Floor Prefab   → FloorPrefab
+Ceiling Prefab → CeilingPrefab
+Stairs Prefab  → StairsPrefab
+```
+
+#### EnemySpawner
+```
+Basic Enemies  → [Enemy_Grito, Enemy_Susurro, Enemy_Eco]
+Boss Data      → Enemy_Dragon
+Enemy Prefab   → EnemyPrefab
+```
+
+#### ItemSpawner
+```
+Item Pool          → [all ItemData assets]
+Item Pickup Prefab → ItemPickupPrefab
+```
+
+#### VendorNPC (on _Managers)
+```
+Item Pool   → [all ItemData assets]
+Stock Size  3
+```
+
+#### BeggarNPC (on _Managers)
+```
+Chance Good      0.4
+Chance Nothing   0.3
+Stab HP Percent  0.35
+Buff Pool        → [all BuffData assets]
+Item Pool        → [all ItemData assets]
+```
+
+#### PlayerStats (on _Managers)
+```
+Max HP             30
+Base Spell Damage  10
+```
+
+---
+
+### 7. Canvas & UI Wiring
+
+Canvas settings: **Screen Space — Overlay**, CanvasScaler → Scale With Screen Size, Reference 1920×1080, Match 0.5.
+
+#### HUD panel — add `HUDController`
+```
+HUD
+  HPBar          ← Slider
+  FloorLabel     ← TMP   "Piso 1 / 5"
+  GoldLabel      ← TMP   "Oro: 0"
+  DOTLabel       ← TMP   "⚠ MALDITO"  (starts hidden — script toggles it)
+```
+Wire `HUDController`:
+```
+Hp Bar      → HPBar
+Floor Label → FloorLabel
+Gold Label  → GoldLabel
+Dot Label   → DOTLabel
+```
+
+#### CombatPanel — add `CombatUIController`, **start inactive**
+```
+CombatPanel
+  EnemySprite          ← Image
+  EnemyNameText        ← TMP
+  EnemyHPSlider        ← Slider
+  ResistanceLabels/
+    LabelAsonante      ← TMP  "Asonante: ?"
+    LabelDiscordante   ← TMP  "Discordante: ?"
+    LabelConsonante    ← TMP  "Consonante: ?"
+  KeyIcons/
+    Icon0 Icon1 Icon2 Icon3   ← Image ×4
+  TimerBar             ← Slider
+  ResultText           ← TMP
+  SongButtonsGroup/
+    BtnAsonante        ← Button
+    BtnDiscordante     ← Button
+    BtnConsonante      ← Button
+```
+Wire `CombatUIController`:
+```
+Combat Panel       → CombatPanel GameObject
+Enemy Sprite       → EnemySprite
+Enemy Name Text    → EnemyNameText
+Enemy HP Slider    → EnemyHPSlider
+Resistance Labels  → [LabelAsonante, LabelDiscordante, LabelConsonante]  (size 3)
+Key Icons          → [Icon0, Icon1, Icon2, Icon3]  (size 4)
+Dir Sprites        → [UpSprite, DownSprite, LeftSprite, RightSprite]  (size 4)
+Timer Bar          → TimerBar
+Result Text        → ResultText
+Song Buttons Group → SongButtonsGroup
+```
+Button OnClick events (set in inspector):
+```
+BtnAsonante    → CombatUIController.OnSongSelected(0)
+BtnDiscordante → CombatUIController.OnSongSelected(1)
+BtnConsonante  → CombatUIController.OnSongSelected(2)
+```
+
+#### BuffSelectionPanel — add `BuffSelectionUI`, **start inactive**
+```
+BuffSelectionPanel
+  TitleText      ← TMP  "Elige un Buff"
+  BuffButton0    ← Button
+    BuffName0    ← TMP  (child)
+    BuffDesc0    ← TMP  (child)
+  BuffButton1 / BuffButton2  (same structure)
+```
+Wire `BuffSelectionUI`:
+```
+Panel            → BuffSelectionPanel
+Buff Buttons     → [BuffButton0, BuffButton1, BuffButton2]
+Buff Name Labels → [BuffName0, BuffName1, BuffName2]
+Buff Desc Labels → [BuffDesc0, BuffDesc1, BuffDesc2]
+Buff Pool        → [all BuffData assets]
+```
+No manual OnClick needed — listeners are added in code.
+
+#### ShopPanel — add `ShopUI`, **start inactive**
+```
+ShopPanel
+  GoldLabel      ← TMP
+  ItemButton0    ← Button
+    ItemName0 / ItemPrice0 / ItemDesc0  ← TMP children
+  ItemButton1 / ItemButton2  (same structure)
+  CloseButton    ← Button  "Cerrar"
+```
+Wire `ShopUI`:
+```
+Panel            → ShopPanel
+Item Buttons     → [ItemButton0, ItemButton1, ItemButton2]
+Item Name Labels → [ItemName0, ItemName1, ItemName2]
+Item Price Labels → [ItemPrice0, ItemPrice1, ItemPrice2]
+Item Desc Labels → [ItemDesc0, ItemDesc1, ItemDesc2]
+Gold Label       → GoldLabel
+Close Button     → CloseButton
+```
+
+#### BeggarPanel — add `BeggarUI`, **start inactive**
+```
+BeggarPanel
+  MessageText    ← TMP
+```
+Wire `BeggarUI`:
+```
+Panel        → BeggarPanel
+Message Text → MessageText
+```
+
+---
+
+### 8. MainMenu Scene
+
+Add `GameManager` (or the `_Managers` prefab) to the MainMenu scene — the singleton guard will destroy duplicates if it's already alive. Add a Canvas with a Start button wired to `GameManager.Instance.StartNewRun()`.
+
+---
+
+### 9. GameOver & Victory Scenes
+
+Both use `GameOverUI`. Wire `Message Text`, `Floor Text`, and `Try Again Button` → `GameManager.Instance.StartNewRun()`. The script checks `GameState.Victory` to decide which message to display.
+
+---
+
+### 10. Pre-Play Checklist
+
+**Build Settings**
+- [ ] 4 scenes added in order: MainMenu(0), Game(1), GameOver(2), Victory(3)
+- [ ] Scene name strings in code match exactly
+
+**_Managers**
+- [ ] All 6 components present
+- [ ] VendorNPC.itemPool, BeggarNPC.buffPool, BeggarNPC.itemPool assigned
+
+**_Dungeon**
+- [ ] DungeonRenderer: all 4 prefabs wired
+- [ ] EnemySpawner: basicEnemies (3), bossData, enemyPrefab
+- [ ] ItemSpawner: itemPool, itemPickupPrefab
+- [ ] CombatManager + SongInputHandler present in scene
+
+**Canvas**
+- [ ] CombatPanel, BuffSelectionPanel, ShopPanel, BeggarPanel all **start inactive**
+- [ ] CombatUIController: 4 keyIcons, 3 resistanceLabels, 4 dirSprites, 3 spell buttons wired
+- [ ] BuffSelectionUI.buffPool has ≥3 assets
+- [ ] ShopUI and BeggarUI have their singleton instances in the scene
+
+**Player**
+- [ ] GridMover on Player root
+- [ ] Child camera tagged MainCamera, FOV 73
+
+**ScriptableObjects**
+- [ ] ≥3 EnemyData (regular) + 1 boss
+- [ ] ≥5 ItemData (one per slot minimum)
+- [ ] ≥3 BuffData
+
+---
+
+### 11. Quick Smoke Test Sequence
+
+Once wired, verify this flow in Play mode:
+
+1. Dungeon generates → player spawns, can walk around
+2. Walk into enemy tile → CombatPanel opens, spell buttons visible
+3. Press a spell button → 4 key icons appear, timer counts down
+4. Input correct sequence (e.g. `W W D W` for Asonante) → resistance label updates from `?` to `DEBIL/NORMAL/INMUNE`
+5. Enemy dies → panel closes, loot drops, gold increments in HUD
+6. Walk into stairs room → mini-boss blocks the way
+7. Defeat mini-boss → step on stairs → BuffSelectionPanel opens with 3 choices
+8. Pick a buff → dungeon regenerates, Floor 2 begins
+9. Walk into Vendor room → ShopPanel opens, items listed with prices
+10. Walk into Beggar room → gold spent, outcome shown in BeggarPanel
+11. Reach Floor 5 → Dragon spawns, resistance rotates at each 25% HP threshold
+12. Kill Dragon → Victory scene loads

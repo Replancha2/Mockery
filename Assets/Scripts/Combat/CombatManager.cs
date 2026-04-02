@@ -8,8 +8,7 @@ public class CombatManager : MonoBehaviour
     public event System.Action                OnCombatEnd;
 
     private EnemyInstance currentEnemy;
-    private Element       selectedSong;
-    private const int     BaseDamage = 10;
+    private ElementType   selectedSong;
 
     void Awake()
     {
@@ -28,55 +27,63 @@ public class CombatManager : MonoBehaviour
         currentEnemy = enemy;
         GameManager.Instance.SetState(GameState.InCombat);
         OnCombatStart?.Invoke(enemy);
+        StartPlayerTurn();
     }
 
-    // Called by CombatUI when player presses a song button
-    public void SelectSong(Element song)
+    // Called by CombatUI when player selects a spell
+    public void SelectSong(ElementType song)
     {
-        if (!PlayerStats.Instance.SpendMana()) { HandleFail(); return; }
         selectedSong = song;
         SongInputHandler.Instance.StartInput(song);
     }
 
+    void StartPlayerTurn()
+    {
+        // Tick DOTs at the start of the player's turn
+        int dotDamage = PlayerStats.Instance.TickDOTs();
+        if (PlayerStats.Instance.IsDead) { GameManager.Instance.GameOver(); return; }
+
+        CombatUIController.Instance.ShowNewTurn(dotDamage);
+    }
+
     void HandleSuccess()
     {
-        int multiplier = ElementSystem.GetMultiplier(selectedSong, currentEnemy.data.element);
-        int damage     = PlayerStats.Instance.GetSongDamage(selectedSong, multiplier);
+        ResistanceTier tier   = currentEnemy.Resistance.Get(selectedSong);
+        float          mult   = ElementSystem.GetMultiplier(tier);
+        int            damage = Mathf.RoundToInt(PlayerStats.Instance.GetSpellDamage(selectedSong) * mult);
 
-        if (multiplier > 0)
+        bool died = damage > 0 && currentEnemy.TakeDamage(damage);
+        CombatUIController.Instance.ShowResult(tier, damage);
+
+        if (died)
         {
-            bool died = currentEnemy.TakeDamage(damage);
-            // Boss phase switch at half HP
-            if (currentEnemy.data.isBoss &&
-                currentEnemy.CurrentHP <= currentEnemy.data.maxHP / 2 &&
-                currentEnemy.data.secondPhaseElement != currentEnemy.data.element)
-            {
-                currentEnemy.data.element = currentEnemy.data.secondPhaseElement;
-                CombatUIController.Instance.ShowPhaseChange();
-            }
-            if (died) { EnemySpawner.Instance.RemoveEnemy(currentEnemy); EndCombat(); return; }
+            currentEnemy.DropLoot();
+            EnemySpawner.Instance.RemoveEnemy(currentEnemy);
+            EndCombat();
+            return;
         }
 
-        PlayerStats.Instance.RegenerateMana();
-        CombatUIController.Instance.ShowResult(multiplier, damage);
-
-        if (multiplier != 2) EnemyAttacks();
+        // Enemy only counter-attacks if hit was not super-effective
+        if (tier != ResistanceTier.Weak)
+            EnemyTurn();
+        else
+            StartPlayerTurn();
     }
 
     void HandleFail()
     {
-        PlayerStats.Instance.RegenerateMana();
         CombatUIController.Instance.ShowFailFeedback();
-        EnemyAttacks();
+        EnemyTurn();
     }
 
-    void EnemyAttacks()
+    void EnemyTurn()
     {
-        int dmg = currentEnemy.data.attackDamage;
-        if (PlayerStats.Instance.HasEarplugs) dmg = Mathf.Max(1, dmg - 2);
-        bool dead = PlayerStats.Instance.TakeDamage(dmg);
-        if (dead) { GameManager.Instance.GameOver(); return; }
-        CombatUIController.Instance.ShowNewTurn();
+        EnemyInstance.AbilityType ability = currentEnemy.Act();
+        CombatUIController.Instance.ShowEnemyAction(ability, currentEnemy);
+
+        if (PlayerStats.Instance.IsDead) { GameManager.Instance.GameOver(); return; }
+
+        StartPlayerTurn();
     }
 
     public void EndCombat()
@@ -87,7 +94,7 @@ public class CombatManager : MonoBehaviour
 
     public void AttemptFlee()
     {
-        if (UnityEngine.Random.value < 0.4f) EndCombat();
-        else EnemyAttacks();
+        if (Random.value < 0.4f) EndCombat();
+        else EnemyTurn();
     }
 }

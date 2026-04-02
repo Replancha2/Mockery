@@ -5,8 +5,8 @@ public class EnemySpawner : MonoBehaviour
 {
     public static EnemySpawner Instance { get; private set; }
 
-    public EnemyData[] basicEnemies;  // assign in inspector: one per element
-    public EnemyData   bossFinalData;
+    public EnemyData[] basicEnemies; // regular enemy templates — assign in inspector
+    public EnemyData   bossData;     // dragon final boss
     public GameObject  enemyPrefab;
 
     private List<EnemyInstance> activeEnemies = new();
@@ -24,17 +24,49 @@ public class EnemySpawner : MonoBehaviour
 
         bool isFinalFloor = floor >= FloorManager.MaxFloors;
 
-        for (int i = 0; i < data.EnemySpawns.Count; i++)
+        // Regular enemies
+        foreach (var pos in data.EnemySpawns)
         {
-            EnemyData d = (isFinalFloor && i == 0)
-                ? bossFinalData
+            EnemyData d = isFinalFloor
+                ? bossData
                 : basicEnemies[Random.Range(0, basicEnemies.Length)];
 
-            var go = Instantiate(enemyPrefab, transform);
-            var ei = go.GetComponent<EnemyInstance>();
-            ei.Init(d, data.EnemySpawns[i]);
-            activeEnemies.Add(ei);
+            SpawnEnemy(d, pos, mini: false);
+
+            // Only place the boss once (at the first spawn point on the final floor)
+            if (isFinalFloor) break;
         }
+
+        // Mini-bosses (one per floor in the room before stairs)
+        if (!isFinalFloor)
+        {
+            foreach (var pos in data.MiniBossSpawns)
+            {
+                EnemyData d = basicEnemies[Random.Range(0, basicEnemies.Length)];
+                SpawnEnemy(d, pos, mini: true);
+            }
+        }
+    }
+
+    void SpawnEnemy(EnemyData d, Vector2Int pos, bool mini)
+    {
+        var go = Instantiate(enemyPrefab, transform);
+        var ei = go.GetComponent<EnemyInstance>();
+
+        // Override isMini at runtime without modifying the shared ScriptableObject
+        if (mini)
+        {
+            // Clone the data so we don't alter the asset
+            var cloned   = Instantiate(d);
+            cloned.isMini = true;
+            ei.Init(cloned, pos);
+        }
+        else
+        {
+            ei.Init(d, pos);
+        }
+
+        activeEnemies.Add(ei);
     }
 
     public EnemyInstance GetEnemyAt(Vector2Int pos)

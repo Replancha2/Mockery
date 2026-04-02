@@ -1,12 +1,17 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class FloorManager : MonoBehaviour
 {
     public static FloorManager Instance { get; private set; }
+
     public int CurrentFloor { get; private set; } = 1;
+    public int Gold         { get; private set; } = 0;
     public const int MaxFloors = 5;
 
-    // Timer window shrinks per floor: 6s -> 4s across 5 floors
+    public List<BuffData> ActiveBuffs { get; private set; } = new();
+
+    // Timer window shrinks per floor: 6s -> 3s across 5 floors
     public float GetInputTimeLimit() => Mathf.Max(3f, 6f - (CurrentFloor - 1) * 0.5f);
 
     void Awake()
@@ -16,12 +21,37 @@ public class FloorManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    public void ResetFloor() => CurrentFloor = 1;
+    public void ResetRun()
+    {
+        CurrentFloor = 1;
+        Gold         = 0;
+        ActiveBuffs.Clear();
+    }
+
+    public void AddGold(int amount)
+    {
+        Gold += amount;
+    }
+
+    public bool SpendGold(int amount)
+    {
+        if (Gold < amount) return false;
+        Gold -= amount;
+        return true;
+    }
+
+    public void ApplyBuff(BuffData buff)
+    {
+        ActiveBuffs.Add(buff);
+        buff.Apply();
+    }
 
     public void NextFloor()
     {
         CurrentFloor++;
         if (CurrentFloor > MaxFloors)
             GameManager.Instance.Victory();
+        else
+            GameManager.Instance.SetState(GameState.BuffSelection);
     }
 }

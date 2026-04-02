@@ -24,11 +24,12 @@ public class GameManager : MonoBehaviour
 
     public void StartNewRun()
     {
-        FloorManager.Instance.ResetFloor();
+        FloorManager.Instance.ResetRun();
+        PlayerStats.Instance.ResetForNewRun();
         SceneManager.LoadScene("Game");
         SetState(GameState.Exploring);
     }
 
-    public void GameOver() => SceneManager.LoadScene("GameOver");
-    public void Victory()  => SetState(GameState.Victory);
+    public void GameOver()  => SceneManager.LoadScene("GameOver");
+    public void Victory()   => SceneManager.LoadScene("Victory");
 }

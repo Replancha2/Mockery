@@ -5,11 +5,12 @@ using TMPro;
 public class HUDController : MonoBehaviour
 {
     [Header("Bars")]
-    public Slider          hpBar;
-    public Slider          manaBar;
+    public Slider hpBar;
 
     [Header("Labels")]
     public TextMeshProUGUI floorLabel;
+    public TextMeshProUGUI goldLabel;
+    public TextMeshProUGUI dotLabel;   // shows "POISONED" or similar when DOT is active
 
     void Start()
     {
@@ -26,14 +27,15 @@ public class HUDController : MonoBehaviour
 
     void OnStateChanged(GameState state)
     {
-        floorLabel.text = $"Floor {FloorManager.Instance.CurrentFloor} / {FloorManager.MaxFloors}";
+        floorLabel.text = $"Piso {FloorManager.Instance.CurrentFloor} / {FloorManager.MaxFloors}";
+        goldLabel.text  = $"Oro: {FloorManager.Instance.Gold}";
     }
 
     void Refresh()
     {
-        hpBar.maxValue   = PlayerStats.Instance.maxHP;
-        hpBar.value      = PlayerStats.Instance.CurrentHP;
-        manaBar.maxValue = PlayerStats.Instance.maxMana;
-        manaBar.value    = PlayerStats.Instance.CurrentMana;
+        hpBar.maxValue = PlayerStats.Instance.maxHP;
+        hpBar.value    = PlayerStats.Instance.CurrentHP;
+        goldLabel.text = $"Oro: {FloorManager.Instance.Gold}";
+        dotLabel.gameObject.SetActive(PlayerStats.Instance.HasActiveDOT());
     }
 }

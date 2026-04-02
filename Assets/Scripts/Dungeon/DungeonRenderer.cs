@@ -37,8 +37,8 @@ public class DungeonRenderer : MonoBehaviour
 
                 Vector3 worldPos = new Vector3(x * cell, 0, y * cell);
 
-                Spawn(floorPrefab,   worldPos,                     Quaternion.identity);
-                Spawn(ceilingPrefab, worldPos + Vector3.up * cell, Quaternion.Euler(180, 0, 0));
+                Spawn(floorPrefab,   worldPos,                     Quaternion.Euler(-90, 0, 0));
+                Spawn(ceilingPrefab, worldPos + Vector3.up * cell, Quaternion.Euler(90, 0, 0));
 
                 if (pos2D == data.StairsPos)
                     Spawn(stairsPrefab, worldPos, Quaternion.identity);
@@ -74,4 +74,12 @@ public class DungeonRenderer : MonoBehaviour
 
     public bool IsWalkable(Vector2Int pos) => currentData != null && currentData.IsFloor(pos);
     public bool IsStairs(Vector2Int pos)   => currentData != null && pos == currentData.StairsPos;
+
+    public RoomTag GetRoomTag(Vector2Int pos)
+    {
+        if (currentData == null) return RoomTag.None;
+        if (pos.x < 0 || pos.x >= currentData.Width || pos.y < 0 || pos.y >= currentData.Height)
+            return RoomTag.None;
+        return currentData.Tags[pos.x, pos.y];
+    }
 }

@@ -1,28 +1,51 @@
-public enum Element { Fire, Water, Earth, Wind }
+using System.Collections.Generic;
+using UnityEngine;
+
+public enum ElementType { Asonante, Discordante, Consonante }
+public enum ResistanceTier { Immune, Normal, Weak }
 
 public static class ElementSystem
 {
-    // Cycle: Fire > Wind > Earth > Water > Fire
-    public static bool Beats(Element attacker, Element defender) =>
-        (attacker == Element.Fire  && defender == Element.Wind)  ||
-        (attacker == Element.Wind  && defender == Element.Earth) ||
-        (attacker == Element.Earth && defender == Element.Water) ||
-        (attacker == Element.Water && defender == Element.Fire);
-
-    public static Element GetCounter(Element e) => e switch
+    // Cycle: Discordante > Consonante > Asonante > Discordante
+    public static ElementType GetCounter(ElementType e) => e switch
     {
-        Element.Fire  => Element.Water,
-        Element.Water => Element.Wind,
-        Element.Wind  => Element.Earth,
-        Element.Earth => Element.Fire,
-        _             => Element.Fire
+        ElementType.Asonante    => ElementType.Consonante,
+        ElementType.Discordante => ElementType.Asonante,
+        ElementType.Consonante  => ElementType.Discordante,
+        _                       => e
     };
 
-    // 2 = super effective | 1 = neutral | 0 = not effective
-    public static int GetMultiplier(Element attack, Element defense)
+    // 0 = immune | 1 = normal | 2 = weak
+    public static float GetMultiplier(ResistanceTier tier) => tier switch
     {
-        if (Beats(attack, defense)) return 2;
-        if (Beats(defense, attack)) return 0;
-        return 1;
+        ResistanceTier.Immune => 0f,
+        ResistanceTier.Normal => 1f,
+        ResistanceTier.Weak   => 2f,
+        _                     => 1f
+    };
+}
+
+// Randomly assigns one Immune / Normal / Weak per element (each tier used exactly once)
+public class EnemyResistance
+{
+    public Dictionary<ElementType, ResistanceTier> Tiers = new();
+
+    public EnemyResistance()
+    {
+        var elements = new List<ElementType>
+            { ElementType.Asonante, ElementType.Discordante, ElementType.Consonante };
+        var tiers = new List<ResistanceTier>
+            { ResistanceTier.Immune, ResistanceTier.Normal, ResistanceTier.Weak };
+
+        for (int i = tiers.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (tiers[i], tiers[j]) = (tiers[j], tiers[i]);
+        }
+
+        for (int i = 0; i < elements.Count; i++)
+            Tiers[elements[i]] = tiers[i];
     }
+
+    public ResistanceTier Get(ElementType e) => Tiers[e];
 }

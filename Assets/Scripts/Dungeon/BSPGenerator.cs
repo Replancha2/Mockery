@@ -14,8 +14,8 @@ public class BSPGenerator : MonoBehaviour
     public int maxLeafSize = 16;
 
     [Header("Spawn Counts")]
-    public int enemiesPerFloor = 6;
-    public int itemsPerFloor   = 4;
+    public int enemiesPerFloor = 4;
+    public int itemsPerFloor   = 3;
 
     void Awake()
     {
@@ -25,14 +25,14 @@ public class BSPGenerator : MonoBehaviour
 
     public DungeonData Generate()
     {
-        var data  = new DungeonData(mapWidth, mapHeight);
-        var root  = new BSPNode(new RectInt(0, 0, mapWidth, mapHeight));
+        var data   = new DungeonData(mapWidth, mapHeight);
+        var root   = new BSPNode(new RectInt(0, 0, mapWidth, mapHeight));
         var leaves = new List<BSPNode>();
 
         Split(root, leaves);
         CreateRooms(data, leaves);
         ConnectRooms(data, root);
-        PlaceStairs(data, leaves);
+        TagRooms(data, leaves);
         PlaceEnemies(data, leaves);
         PlaceItems(data, leaves);
 
@@ -105,6 +105,79 @@ public class BSPGenerator : MonoBehaviour
         CarveVertical(data,   new Vector2Int(b.x, a.y), b);
     }
 
+    // Assigns special tags to rooms:
+    //   leaves[0]       = PlayerSpawn (already set in CreateRooms)
+    //   leaves[last]    = Stairs (+ MiniBoss spawn in same room)
+    //   leaves[last-1]  = Vendor
+    //   leaves[last-2]  = Beggar (if enough rooms exist)
+    void TagRooms(DungeonData data, List<BSPNode> leaves)
+    {
+        int last = leaves.Count - 1;
+
+        // Stairs room
+        var stairsRoom = leaves[last].Room;
+        data.StairsPos = new Vector2Int(stairsRoom.x + stairsRoom.width / 2,
+                                        stairsRoom.y + stairsRoom.height / 2);
+        MarkRoom(data, stairsRoom, RoomTag.Stairs);
+        data.MiniBossSpawns.Add(new Vector2Int(stairsRoom.x + 1, stairsRoom.y + 1));
+        MarkTile(data, data.MiniBossSpawns[0], RoomTag.MiniBoss);
+
+        // Vendor room
+        if (last >= 1)
+        {
+            var vendorRoom = leaves[last - 1].Room;
+            data.VendorPos = new Vector2Int(vendorRoom.x + vendorRoom.width / 2,
+                                            vendorRoom.y + vendorRoom.height / 2);
+            MarkRoom(data, vendorRoom, RoomTag.Vendor);
+        }
+
+        // Beggar room
+        if (last >= 2)
+        {
+            var beggarRoom = leaves[last - 2].Room;
+            data.BeggarPos = new Vector2Int(beggarRoom.x + beggarRoom.width / 2,
+                                            beggarRoom.y + beggarRoom.height / 2);
+            MarkRoom(data, beggarRoom, RoomTag.Beggar);
+        }
+    }
+
+    void PlaceEnemies(DungeonData data, List<BSPNode> leaves)
+    {
+        // Skip leaves[0] (player spawn), last 3 (stairs/vendor/beggar)
+        int limit = Mathf.Max(1, leaves.Count - 3);
+        for (int i = 1; i < limit && data.EnemySpawns.Count < enemiesPerFloor; i++)
+        {
+            var pos = new Vector2Int(leaves[i].Room.x + 1, leaves[i].Room.y + 1);
+            if (pos != data.StairsPos && pos != data.VendorPos && pos != data.BeggarPos)
+                data.EnemySpawns.Add(pos);
+        }
+    }
+
+    void PlaceItems(DungeonData data, List<BSPNode> leaves)
+    {
+        int limit = Mathf.Max(1, leaves.Count - 3);
+        for (int i = 0; i < itemsPerFloor && i < limit - 1; i++)
+        {
+            var room = leaves[i + 1].Room;
+            var pos  = new Vector2Int(room.x + room.width - 2, room.y + room.height - 2);
+            if (!data.EnemySpawns.Contains(pos) && pos != data.StairsPos)
+                data.ItemSpawns.Add(pos);
+        }
+    }
+
+    void MarkRoom(DungeonData data, RectInt room, RoomTag tag)
+    {
+        for (int rx = room.x; rx < room.x + room.width; rx++)
+            for (int ry = room.y; ry < room.y + room.height; ry++)
+                data.Tags[rx, ry] = tag;
+    }
+
+    void MarkTile(DungeonData data, Vector2Int pos, RoomTag tag)
+    {
+        if (pos.x >= 0 && pos.x < data.Width && pos.y >= 0 && pos.y < data.Height)
+            data.Tags[pos.x, pos.y] = tag;
+    }
+
     void CarveHorizontal(DungeonData data, Vector2Int from, Vector2Int to)
     {
         int minX = Mathf.Min(from.x, to.x), maxX = Mathf.Max(from.x, to.x);
@@ -127,34 +200,5 @@ public class BSPGenerator : MonoBehaviour
             return new Vector2Int(node.Room.x + node.Room.width  / 2,
                                   node.Room.y + node.Room.height / 2);
         return GetRoomCenter(Random.value > 0.5f ? node.Left : node.Right);
-    }
-
-    void PlaceStairs(DungeonData data, List<BSPNode> leaves)
-    {
-        BSPNode last = leaves[leaves.Count - 1];
-        data.StairsPos = new Vector2Int(
-            last.Room.x + last.Room.width  / 2,
-            last.Room.y + last.Room.height / 2
-        );
-    }
-
-    void PlaceEnemies(DungeonData data, List<BSPNode> leaves)
-    {
-        for (int i = 1; i < leaves.Count && data.EnemySpawns.Count < enemiesPerFloor; i++)
-        {
-            var pos = new Vector2Int(leaves[i].Room.x + 1, leaves[i].Room.y + 1);
-            if (pos != data.StairsPos) data.EnemySpawns.Add(pos);
-        }
-    }
-
-    void PlaceItems(DungeonData data, List<BSPNode> leaves)
-    {
-        for (int i = 0; i < itemsPerFloor && i < leaves.Count - 1; i++)
-        {
-            var room = leaves[i + 1].Room;
-            var pos  = new Vector2Int(room.x + room.width - 2, room.y + room.height - 2);
-            if (!data.EnemySpawns.Contains(pos) && pos != data.StairsPos)
-                data.ItemSpawns.Add(pos);
-        }
     }
 }

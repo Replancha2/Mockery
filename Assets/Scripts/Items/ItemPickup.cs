@@ -7,13 +7,14 @@ public class ItemPickup : MonoBehaviour
 
     public void Collect()
     {
-        switch (data.type)
-        {
-            case ItemType.HealthPotion: PlayerStats.Instance.RestoreHP(data.restoreAmount);     break;
-            case ItemType.LuteString:  PlayerStats.Instance.RestoreMana(data.restoreAmount);    break;
-            case ItemType.SheetMusic:  PlayerStats.Instance.ApplySheetMusic(data.elementBonus); break;
-            case ItemType.Earplugs:    PlayerStats.Instance.ApplyEarplugs();                    break;
-        }
+        // Apply stat bonuses directly (equipment is stat-only, no visual cosmetics)
+        var stats = PlayerStats.Instance;
+        if (data.hpBonus > 0)          stats.RestoreHP(data.hpBonus);
+        if (data.defenseBonus > 0)     stats.AddDefenseBonus(data.defenseBonus);
+        if (data.asonanteBonus > 0)    stats.AddSpellDamageBonus(ElementType.Asonante,    data.asonanteBonus);
+        if (data.discordanteBonus > 0) stats.AddSpellDamageBonus(ElementType.Discordante, data.discordanteBonus);
+        if (data.consonanteBonus > 0)  stats.AddSpellDamageBonus(ElementType.Consonante,  data.consonanteBonus);
+
         ItemSpawner.Instance.RemoveItem(this);
         Destroy(gameObject);
     }

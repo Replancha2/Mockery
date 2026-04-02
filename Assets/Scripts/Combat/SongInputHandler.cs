@@ -7,18 +7,18 @@ public class SongInputHandler : MonoBehaviour
 
     public enum Dir { Up, Down, Left, Right }
 
-    public static readonly Dictionary<Element, Dir[]> Songs = new()
+    // 4-key sequences for each spell type (Helldivers-style)
+    public static readonly Dictionary<ElementType, Dir[]> Songs = new()
     {
-        { Element.Fire,  new[]{ Dir.Up, Dir.Up, Dir.Right, Dir.Up, Dir.Up, Dir.Right } },
-        { Element.Water, new[]{ Dir.Left, Dir.Down, Dir.Down, Dir.Left, Dir.Down, Dir.Down } },
-        { Element.Earth, new[]{ Dir.Down, Dir.Down, Dir.Right, Dir.Down, Dir.Down, Dir.Right } },
-        { Element.Wind,  new[]{ Dir.Up, Dir.Left, Dir.Right, Dir.Up, Dir.Left, Dir.Right } },
+        { ElementType.Asonante,    new[]{ Dir.Up,   Dir.Up,   Dir.Right, Dir.Up   } },
+        { ElementType.Discordante, new[]{ Dir.Left,  Dir.Down, Dir.Down,  Dir.Left } },
+        { ElementType.Consonante,  new[]{ Dir.Down,  Dir.Right, Dir.Right, Dir.Down } },
     };
 
-    public Element ActiveSong    { get; private set; }
-    public int     CurrentIndex  { get; private set; }
-    public float   TimeRemaining { get; private set; }
-    private bool   isActive;
+    public ElementType ActiveSong    { get; private set; }
+    public int         CurrentIndex  { get; private set; }
+    public float       TimeRemaining { get; private set; }
+    private bool       isActive;
 
     public event System.Action<int> OnKeyCorrect; // passes new index
     public event System.Action      OnSuccess;
@@ -30,7 +30,7 @@ public class SongInputHandler : MonoBehaviour
         Instance = this;
     }
 
-    public void StartInput(Element song)
+    public void StartInput(ElementType song)
     {
         ActiveSong    = song;
         CurrentIndex  = 0;

@@ -7,8 +7,8 @@ public class GridMover : MonoBehaviour
     public float turnSpeed = 10f;
 
     private Vector2Int gridPos;
-    private float facing = 0f; // 0=North 90=East 180=South 270=West
-    private bool isMoving = false;
+    private float facing   = 0f; // 0=North 90=East 180=South 270=West
+    private bool  isMoving = false;
 
     public const float CellSize = 4f;
 
@@ -36,6 +36,11 @@ public class GridMover : MonoBehaviour
         Vector2Int target = gridPos + dir;
         if (!DungeonRenderer.Instance.IsWalkable(target)) return;
 
+        // NPC rooms — check before enemy check so NPCs aren't blocked by enemies on same tile
+        RoomTag tag = DungeonRenderer.Instance.GetRoomTag(target);
+        if (tag == RoomTag.Vendor && VendorNPC.Instance != null) { VendorNPC.Instance.OpenShop(); return; }
+        if (tag == RoomTag.Beggar && BeggarNPC.Instance != null) { BeggarNPC.Instance.Interact(); return; }
+
         EnemyInstance enemy = EnemySpawner.Instance.GetEnemyAt(target);
         if (enemy != null) { CombatManager.Instance.StartCombat(enemy); return; }
 
@@ -45,12 +50,14 @@ public class GridMover : MonoBehaviour
         if (DungeonRenderer.Instance.IsStairs(target))
         {
             FloorManager.Instance.NextFloor();
-            FindObjectOfType<DungeonOrchestrator>().GenerateFloor();
+            // If BuffSelectionUI isn't in the scene yet, generate the next floor directly
+            if (BuffSelectionUI.Instance == null)
+                FindFirstObjectByType<DungeonOrchestrator>().GenerateFloor();
             return;
         }
 
         isMoving = true;
-        gridPos = target;
+        gridPos  = target;
         transform.DOMove(GridToWorld(target), 1f / moveSpeed)
                  .SetEase(Ease.InOutSine)
                  .OnComplete(() => isMoving = false);
@@ -78,7 +85,10 @@ public class GridMover : MonoBehaviour
     {
         gridPos = pos;
         transform.position = GridToWorld(pos);
+        Debug.Log($"GridMover placed at grid {pos}, world {transform.position}");
     }
+
+    public Vector2Int GetGridPos() => gridPos;
 
     public static Vector3 GridToWorld(Vector2Int pos)
         => new Vector3(pos.x * CellSize, 1.6f, pos.y * CellSize);
