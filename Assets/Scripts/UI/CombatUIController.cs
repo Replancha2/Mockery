@@ -25,11 +25,8 @@ public class CombatUIController : MonoBehaviour
     private EnemyInstance displayedEnemy;
     private float feedbackTimer = 0f;
 
-    // Tracks which resistances the player has already discovered this combat
-    private Dictionary<ElementType, ResistanceTier> revealed = new();
-
-    private static readonly ElementType[] allElements =
-        { ElementType.Asonante, ElementType.Discordante, ElementType.Consonante };
+    private static readonly SpellType[] allElements =
+        { SpellType.Assonant, SpellType.Dissonant, SpellType.Consonant };
 
     void Awake()
     {

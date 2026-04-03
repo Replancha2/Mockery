@@ -10,7 +10,6 @@ public class HUDController : MonoBehaviour
     [Header("Labels")]
     public TextMeshProUGUI floorLabel;
     public TextMeshProUGUI goldLabel;
-    public TextMeshProUGUI dotLabel;   // shows "POISONED" or similar when DOT is active
 
     void Start()
     {
@@ -36,6 +35,6 @@ public class HUDController : MonoBehaviour
         hpBar.maxValue = PlayerStats.Instance.maxHP;
         hpBar.value    = PlayerStats.Instance.CurrentHP;
         goldLabel.text = $"Oro: {FloorManager.Instance.Gold}";
-        dotLabel.gameObject.SetActive(PlayerStats.Instance.HasActiveDOT());
+
     }
 }

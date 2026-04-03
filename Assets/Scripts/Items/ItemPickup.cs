@@ -11,9 +11,9 @@ public class ItemPickup : MonoBehaviour
         var stats = PlayerStats.Instance;
         if (data.hpBonus > 0)          stats.RestoreHP(data.hpBonus);
         if (data.defenseBonus > 0)     stats.AddDefenseBonus(data.defenseBonus);
-        if (data.asonanteBonus > 0)    stats.AddSpellDamageBonus(ElementType.Asonante,    data.asonanteBonus);
-        if (data.discordanteBonus > 0) stats.AddSpellDamageBonus(ElementType.Discordante, data.discordanteBonus);
-        if (data.consonanteBonus > 0)  stats.AddSpellDamageBonus(ElementType.Consonante,  data.consonanteBonus);
+        if (data.AssonantBonus > 0)    stats.AddSpellDamageBonus(SpellType.Assonant,    data.AssonantBonus);
+        if (data.DissonantBonus > 0) stats.AddSpellDamageBonus(SpellType.Dissonant, data.DissonantBonus);
+        if (data.ConsonantBonus > 0)  stats.AddSpellDamageBonus(SpellType.Consonant,  data.ConsonantBonus);
 
         ItemSpawner.Instance.RemoveItem(this);
         Destroy(gameObject);

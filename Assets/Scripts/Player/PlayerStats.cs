@@ -6,16 +6,20 @@ public class PlayerStats : MonoBehaviour
     public static PlayerStats Instance { get; private set; }
 
     [Header("Base Stats")]
-    public int maxHP        = 30;
-    public int maxMana      = 20;
-    public int songManaCost = 3;
+    public int maxHP         = 30;
+    public int baseSpellDamage = 10;
 
-    public int CurrentHP   { get; private set; }
-    public int CurrentMana { get; private set; }
+    public int CurrentHP { get; private set; }
+
+    public int DefenseBonus     { get; private set; }
+    public int CombatStartHeal  { get; private set; }
+    public int GoldBonusPerKill { get; private set; }
 
     public bool      HasEarplugs  { get; private set; }
     public SpellType BonusElement { get; private set; } = (SpellType)(-1);
     public bool      HasSheetMusic => (int)BonusElement >= 0;
+
+    private Dictionary<SpellType, int> spellDamageBonuses;
 
     public event System.Action OnStatsChanged;
 
@@ -24,6 +28,13 @@ public class PlayerStats : MonoBehaviour
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        spellDamageBonuses = new Dictionary<SpellType, int>
+        {
+            { SpellType.Consonant, 0 },
+            { SpellType.Assonant,  0 },
+            { SpellType.Dissonant, 0 },
+        };
     }
 
     void Start()
@@ -34,11 +45,9 @@ public class PlayerStats : MonoBehaviour
     public void ResetForNewRun()
     {
         CurrentHP = maxHP;
-        activeDOTs.Clear();
-        foreach (var key in new List<ElementType>(spellDamageBonuses.Keys))
+        foreach (var key in new List<SpellType>(spellDamageBonuses.Keys))
             spellDamageBonuses[key] = 0;
         DefenseBonus     = 0;
-        DOTResistance    = 0;
         CombatStartHeal  = 0;
         GoldBonusPerKill = 0;
         OnStatsChanged?.Invoke();
@@ -58,45 +67,15 @@ public class PlayerStats : MonoBehaviour
         OnStatsChanged?.Invoke();
     }
 
-    // Called at the start of the player's turn — ticks all DOTs and returns total damage dealt
-    public int TickDOTs()
-    {
-        int total = 0;
-        for (int i = activeDOTs.Count - 1; i >= 0; i--)
-        {
-            var dot = activeDOTs[i];
-            total += dot.damagePerTurn;
-            dot.turnsRemaining--;
-            if (dot.turnsRemaining <= 0)
-                activeDOTs.RemoveAt(i);
-            else
-                activeDOTs[i] = dot;
-        }
-        if (total > 0)
-        {
-            CurrentHP = Mathf.Max(0, CurrentHP - total);
-            OnStatsChanged?.Invoke();
-        }
-        return total;
-    }
-
-    public void ApplyDOT(int damagePerTurn, int duration)
-    {
-        int effectiveDuration = Mathf.Max(1, duration - DOTResistance);
-        activeDOTs.Add(new DOTEffect { damagePerTurn = damagePerTurn, turnsRemaining = effectiveDuration });
-    }
-
-    public void AddSpellDamageBonus(ElementType element, int bonus)
+    public void AddSpellDamageBonus(SpellType element, int bonus)
     {
         spellDamageBonuses[element] += bonus;
     }
 
-    public int GetSpellDamage(ElementType element)
+    public int GetSpellDamage(SpellType element)
     {
         return baseSpellDamage + spellDamageBonuses[element];
     }
-
-    public bool HasActiveDOT() => activeDOTs.Count > 0;
 
     // Called by BuffData.Apply()
     public void AddMaxHP(int amount)
@@ -106,12 +85,16 @@ public class PlayerStats : MonoBehaviour
         OnStatsChanged?.Invoke();
     }
 
-    public void ApplyEarplugs()                      { HasEarplugs = true;   OnStatsChanged?.Invoke(); }
-    public void ApplySheetMusic(SpellType e)          { BonusElement = e;     OnStatsChanged?.Invoke(); }
+    public void AddDefenseBonus(int amount)    { DefenseBonus     += amount; OnStatsChanged?.Invoke(); }
+    public void AddCombatStartHeal(int amount) { CombatStartHeal  += amount; OnStatsChanged?.Invoke(); }
+    public void AddGoldBonus(int amount)       { GoldBonusPerKill += amount; OnStatsChanged?.Invoke(); }
+
+    public void ApplyEarplugs()               { HasEarplugs  = true; OnStatsChanged?.Invoke(); }
+    public void ApplySheetMusic(SpellType e)   { BonusElement = e;    OnStatsChanged?.Invoke(); }
 
     public int GetSongDamage(SpellType song, int multiplier)
     {
         int bonus = (HasSheetMusic && song == BonusElement) ? 5 : 0;
-        return (10 + bonus) * multiplier;
+        return (baseSpellDamage + bonus + spellDamageBonuses[song]) * multiplier;
     }
 }

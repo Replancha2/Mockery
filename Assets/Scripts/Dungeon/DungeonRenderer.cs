@@ -43,14 +43,14 @@ public class DungeonRenderer : MonoBehaviour
 
                 Vector3 worldPos = new Vector3(x * cell, 0, y * cell);
 
-                GameObject floor = Spawn(floorPrefab, worldPos, Quaternion.identity);
+                GameObject floor = Spawn(floorPrefab, worldPos, Quaternion.Euler(-90, 0, 0));
                 if (floorMaterials != null && floorMaterials.Length > 0)
                 {
                     var mr = floor.GetComponent<MeshRenderer>();
                     if (mr != null) mr.material = floorMaterials[Random.Range(0, floorMaterials.Length)];
                 }
 
-                Spawn(ceilingPrefab, worldPos + Vector3.up * cell, Quaternion.Euler(180, 0, 0));
+                Spawn(ceilingPrefab, worldPos + Vector3.up * cell, Quaternion.Euler(90, 0, 0));
 
                 if (pos2D == data.StairsPos)
                     Spawn(stairsPrefab, worldPos, Quaternion.identity);

@@ -23,6 +23,4 @@ public static class ElementSystem
         if (Beats(defense, attack)) return 0;
         return 1;
     }
-
-    public ResistanceTier Get(ElementType e) => Tiers[e];
 }

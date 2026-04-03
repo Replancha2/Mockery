@@ -3,9 +3,8 @@ using UnityEngine;
 public enum BuffEffectType
 {
     HPBonus,             // raises maxHP and heals the difference
-    SpellDamageBonus,    // +value to one ElementType's base damage
+    SpellDamageBonus,    // +value to one SpellType's base damage
     DefenseBonus,        // flat damage reduction on all incoming hits
-    DOTResistance,       // reduces DOT duration by value turns (clamped to 1)
     HealOnCombatStart,   // restores value HP at the start of every combat
     GoldBonus,           // +value gold per enemy kill
 }
@@ -16,10 +15,10 @@ public class BuffData : ScriptableObject
     public string       buffName;
     [TextArea] public string description;
     public BuffEffectType effectType;
-    public ElementType  element; // only used for SpellDamageBonus
+    public SpellType  element; // only used for SpellDamageBonus
     public int          value;
 
-    // Applies this buff's permanent effect to the player
+    //Applies this buff's permanent effect to the player
     public void Apply()
     {
         switch (effectType)
@@ -32,9 +31,6 @@ public class BuffData : ScriptableObject
                 break;
             case BuffEffectType.DefenseBonus:
                 PlayerStats.Instance.AddDefenseBonus(value);
-                break;
-            case BuffEffectType.DOTResistance:
-                PlayerStats.Instance.AddDOTResistance(value);
                 break;
             case BuffEffectType.HealOnCombatStart:
                 PlayerStats.Instance.AddCombatStartHeal(value);

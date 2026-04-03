@@ -6,8 +6,16 @@ public enum EquipmentSlot { Head, Chest, Legs, Feet, Feather }
 public class ItemData : ScriptableObject
 {
     public string   itemName;
-    public ItemType type;
     public SpellType elementBonus;  // only used if type == SheetMusic
     public Sprite   icon;
     public int      restoreAmount; // for HealthPotion and LuteString
+
+    public int      buyPrice;
+
+    [Header("Stat Bonuses")]
+    public int hpBonus;
+    public int defenseBonus;
+    public int AssonantBonus;
+    public int DissonantBonus;
+    public int ConsonantBonus;
 }

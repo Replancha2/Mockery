@@ -11,7 +11,7 @@ Combat uses **WASD sequences** (Helldivers-style) to cast insults. Enemies have 
 
 **Permadeath.** Die on any floor → restart the entire run.
 
-**Theme:** Asonante / Discordante / Consonante (Elemental RPS)
+**Theme:** Assonant / Dissonant / Consonant (Elemental RPS)
 **Engine:** Unity (URP)
 **Key Package:** DOTween
 
@@ -20,15 +20,15 @@ Combat uses **WASD sequences** (Helldivers-style) to cast insults. Enemies have 
 ## Element Cycle
 
 ```
-Discordante → Consonante → Asonante → Discordante
+Dissonant → Consonant → Assonant → Dissonant
 (each beats the one to its right)
 ```
 
 | Your spell       | Beats           | Loses to        |
 |------------------|-----------------|-----------------|
-| Discordante      | Consonante      | Asonante        |
-| Consonante       | Asonante        | Discordante     |
-| Asonante         | Discordante     | Consonante      |
+| Dissonant      | Consonant      | Assonant        |
+| Consonant       | Assonant        | Dissonant     |
+| Assonant         | Dissonant     | Consonant      |
 
 ### Spell Sequences (WASD input, Helldivers-style)
 
@@ -36,9 +36,9 @@ Each spell shows directional arrows in the Libro UI. Player inputs the sequence 
 
 | Spell Type   | Sequence    |
 |--------------|-------------|
-| Asonante     | ↑ ↑ → ↑    |
-| Discordante  | ← ↓ ↓ ←   |
-| Consonante   | ↓ → → ↓   |
+| Assonant     | ↑ ↑ → ↑    |
+| Dissonant  | ← ↓ ↓ ←   |
+| Consonant   | ↓ → → ↓   |
 
 > **Design note:** Combat is turn-based. Each turn has a time window. Faster input = more time remaining = player advantage (can act again before timer resets). Players who memorize sequences can skip looking at the book and gain speed.
 
@@ -59,7 +59,7 @@ Each enemy always has exactly one of each tier (one immune, one normal, one weak
 ## Roguelike Systems
 
 ### Between-Floor Buffs
-After clearing a floor and before entering the next, the player is offered **3 random buffs** to choose from. Buffs affect skills or main stats (e.g., "+15% Asonante damage", "+10 max HP", "DOT resistance", "gold multiplier").
+After clearing a floor and before entering the next, the player is offered **3 random buffs** to choose from. Buffs affect skills or main stats (e.g., "+15% Assonant damage", "+10 max HP", "DOT resistance", "gold multiplier").
 
 ### Permadeath
 Dying on any floor returns the player to Floor 1. All progress lost. No checkpoints.
@@ -118,7 +118,7 @@ Equipment is **stat-only**, no visual cosmetics. Stats include: HP, defense, spe
 - Appears on the last floor.
 - **Only has damage abilities** — no self-healing.
 - **Phase mechanic:** Every 25% HP lost, the Dragon rotates its resistance profile.
-  - e.g., starts Immune to Discordante → at 75% HP becomes Immune to Asonante → etc.
+  - e.g., starts Immune to Dissonant → at 75% HP becomes Immune to Assonant → etc.
 - Defeating the Dragon = win condition.
 
 ---
@@ -139,7 +139,7 @@ Assets/
     UI/           CombatUIController, HUDController, GameOverUI, VictoryUI,
                   LibroUI (spell book input display), BuffPickUI, ShopUI
   ScriptableObjects/
-    Enemies/      EnemyBase (variants: Discordante, Consonante, Asonante, MiniBoss)
+    Enemies/      EnemyBase (variants: Dissonant, Consonant, Assonant, MiniBoss)
     Items/        EquipmentItems (per slot), GoldPickup
     Buffs/        BuffDefinitions (15–20 buffs)
     Boss/         DragonBoss
@@ -148,7 +148,7 @@ Assets/
     Enemies/      EnemyPrefab, MiniBossPrefab, DragonPrefab
     Items/        ItemPickupPrefab, GoldPickupPrefab
     NPCs/         VendorPrefab, BeggarPrefab
-    VFX/          VFX_Asonante, VFX_Discordante, VFX_Consonante
+    VFX/          VFX_Assonant, VFX_Dissonant, VFX_Consonant
   Scenes/
     MainMenu, Game, GameOver, Victory
 ```
@@ -435,16 +435,16 @@ public class DungeonData
 ### PHASE 5 — Element System
 > Day 3
 
-- [ ] **5.1** Define `ElementType` enum: `Asonante`, `Discordante`, `Consonante`.
-- [ ] **5.2** Implement `ElementSystem` static class with `GetMultiplier(ElementType attack, ResistanceTier tier)`.
+- [ ] **5.1** Define `SpellType` enum: `Assonant`, `Dissonant`, `Consonant`.
+- [ ] **5.2** Implement `ElementSystem` static class with `GetMultiplier(SpellType attack, ResistanceTier tier)`.
 
 ```csharp
 // Scripts/Combat/ElementSystem.cs
-public enum ElementType { Asonante, Discordante, Consonante }
+public enum SpellType { Assonant, Dissonant, Consonant }
 
-// Discordante beats Consonante
-// Consonante beats Asonante
-// Asonante beats Discordante
+// Dissonant beats Consonant
+// Consonant beats Assonant
+// Assonant beats Dissonant
 public enum ResistanceTier { Immune, Normal, Weak }
 
 public static class ElementSystem
@@ -459,11 +459,11 @@ public static class ElementSystem
     };
 
     // Returns which element beats the given element
-    public static ElementType GetCounter(ElementType e) => e switch
+    public static SpellType GetCounter(SpellType e) => e switch
     {
-        ElementType.Asonante    => ElementType.Consonante,
-        ElementType.Discordante => ElementType.Asonante,
-        ElementType.Consonante  => ElementType.Discordante,
+        SpellType.Assonant    => SpellType.Consonant,
+        SpellType.Dissonant => SpellType.Assonant,
+        SpellType.Consonant  => SpellType.Dissonant,
         _ => e
     };
 }
@@ -478,12 +478,12 @@ using UnityEngine;
 
 public class EnemyResistance
 {
-    public Dictionary<ElementType, ResistanceTier> Tiers = new();
+    public Dictionary<SpellType, ResistanceTier> Tiers = new();
 
     public EnemyResistance()
     {
-        var elements = new List<ElementType>
-            { ElementType.Asonante, ElementType.Discordante, ElementType.Consonante };
+        var elements = new List<SpellType>
+            { SpellType.Assonant, SpellType.Dissonant, SpellType.Consonant };
         var tiers = new List<ResistanceTier>
             { ResistanceTier.Immune, ResistanceTier.Normal, ResistanceTier.Weak };
 
@@ -498,7 +498,7 @@ public class EnemyResistance
             Tiers[elements[i]] = tiers[i];
     }
 
-    public ResistanceTier Get(ElementType e) => Tiers[e];
+    public ResistanceTier Get(SpellType e) => Tiers[e];
 }
 ```
 
@@ -507,7 +507,7 @@ public class EnemyResistance
 ### PHASE 6 — Spell Input System (LibroUI)
 > Day 3
 
-- [ ] **6.1** Define spell sequences as `SpellDefinition` ScriptableObjects: `ElementType`, `KeyCode[]` sequence, name, description.
+- [ ] **6.1** Define spell sequences as `SpellDefinition` ScriptableObjects: `SpellType`, `KeyCode[]` sequence, name, description.
 - [ ] **6.2** Implement `SpellInputHandler`:
   - Active only during `InCombat` state.
   - Tracks current input progress against all defined sequences.
@@ -637,9 +637,9 @@ public class CombatManager : MonoBehaviour
 
 Example buffs:
 ```
-+15% Asonante damage
-+15% Discordante damage
-+15% Consonante damage
++15% Assonant damage
++15% Dissonant damage
++15% Consonant damage
 +20 max HP
 +10 base defense
 -25% DOT duration received
@@ -766,9 +766,9 @@ EventSystem
 | Item_SombreroRoto | Sombrero Roto | Head | hpBonus=5 | 4 |
 | Item_TunicaVieja | Túnica Vieja | Chest | defenseBonus=2 | 5 |
 | Item_PantalonRemendado | Pantalón Remendado | Legs | hpBonus=3, defenseBonus=1 | 4 |
-| Item_ZapatosDeBardo | Zapatos de Bardo | Feet | asonanteBonus=3 | 5 |
-| Item_PlumaDelDiablo | Pluma del Diablo | Feather | discordanteBonus=5 | 8 |
-| Item_PlumaDeLuz | Pluma de Luz | Feather | consonanteBonus=5 | 8 |
+| Item_ZapatosDeBardo | Zapatos de Bardo | Feet | AssonantBonus=3 | 5 |
+| Item_PlumaDelDiablo | Pluma del Diablo | Feather | DissonantBonus=5 | 8 |
+| Item_PlumaDeLuz | Pluma de Luz | Feather | ConsonantBonus=5 | 8 |
 
 #### BuffData — right-click → Create → Mockery → BuffData
 
@@ -776,9 +776,9 @@ EventSystem
 |-------|----------|------------|---------|-------|
 | Buff_HP | Alma Robusta | HPBonus | — | 15 |
 | Buff_Def | Piel Gruesa | DefenseBonus | — | 3 |
-| Buff_Ason | Voz Asonante | SpellDamageBonus | Asonante | 5 |
-| Buff_Disc | Cacofonía | SpellDamageBonus | Discordante | 5 |
-| Buff_Cons | Armonía Pura | SpellDamageBonus | Consonante | 5 |
+| Buff_Ason | Voz Assonant | SpellDamageBonus | Assonant | 5 |
+| Buff_Disc | Cacofonía | SpellDamageBonus | Dissonant | 5 |
+| Buff_Cons | Armonía Pura | SpellDamageBonus | Consonant | 5 |
 | Buff_DOT | Resistencia al Veneno | DOTResistance | — | 2 |
 | Buff_Heal | Adrenalina | HealOnCombatStart | — | 8 |
 | Buff_Gold | Dedos de Oro | GoldBonus | — | 2 |
@@ -893,17 +893,17 @@ CombatPanel
   EnemyNameText        ← TMP
   EnemyHPSlider        ← Slider
   ResistanceLabels/
-    LabelAsonante      ← TMP  "Asonante: ?"
-    LabelDiscordante   ← TMP  "Discordante: ?"
-    LabelConsonante    ← TMP  "Consonante: ?"
+    LabelAssonant      ← TMP  "Assonant: ?"
+    LabelDissonant   ← TMP  "Dissonant: ?"
+    LabelConsonant    ← TMP  "Consonant: ?"
   KeyIcons/
     Icon0 Icon1 Icon2 Icon3   ← Image ×4
   TimerBar             ← Slider
   ResultText           ← TMP
   SongButtonsGroup/
-    BtnAsonante        ← Button
-    BtnDiscordante     ← Button
-    BtnConsonante      ← Button
+    BtnAssonant        ← Button
+    BtnDissonant     ← Button
+    BtnConsonant      ← Button
 ```
 Wire `CombatUIController`:
 ```
@@ -911,7 +911,7 @@ Combat Panel       → CombatPanel GameObject
 Enemy Sprite       → EnemySprite
 Enemy Name Text    → EnemyNameText
 Enemy HP Slider    → EnemyHPSlider
-Resistance Labels  → [LabelAsonante, LabelDiscordante, LabelConsonante]  (size 3)
+Resistance Labels  → [LabelAssonant, LabelDissonant, LabelConsonant]  (size 3)
 Key Icons          → [Icon0, Icon1, Icon2, Icon3]  (size 4)
 Dir Sprites        → [UpSprite, DownSprite, LeftSprite, RightSprite]  (size 4)
 Timer Bar          → TimerBar
@@ -920,9 +920,9 @@ Song Buttons Group → SongButtonsGroup
 ```
 Button OnClick events (set in inspector):
 ```
-BtnAsonante    → CombatUIController.OnSongSelected(0)
-BtnDiscordante → CombatUIController.OnSongSelected(1)
-BtnConsonante  → CombatUIController.OnSongSelected(2)
+BtnAssonant    → CombatUIController.OnSongSelected(0)
+BtnDissonant → CombatUIController.OnSongSelected(1)
+BtnConsonant  → CombatUIController.OnSongSelected(2)
 ```
 
 #### BuffSelectionPanel — add `BuffSelectionUI`, **start inactive**
@@ -1029,7 +1029,7 @@ Once wired, verify this flow in Play mode:
 1. Dungeon generates → player spawns, can walk around
 2. Walk into enemy tile → CombatPanel opens, spell buttons visible
 3. Press a spell button → 4 key icons appear, timer counts down
-4. Input correct sequence (e.g. `W W D W` for Asonante) → resistance label updates from `?` to `DEBIL/NORMAL/INMUNE`
+4. Input correct sequence (e.g. `W W D W` for Assonant) → resistance label updates from `?` to `DEBIL/NORMAL/INMUNE`
 5. Enemy dies → panel closes, loot drops, gold increments in HUD
 6. Walk into stairs room → mini-boss blocks the way
 7. Defeat mini-boss → step on stairs → BuffSelectionPanel opens with 3 choices

@@ -96,9 +96,9 @@ public class ShopUI : MonoBehaviour
         var sb = new System.Text.StringBuilder();
         if (item.hpBonus > 0)            sb.AppendLine($"+{item.hpBonus} HP");
         if (item.defenseBonus > 0)       sb.AppendLine($"+{item.defenseBonus} DEF");
-        if (item.asonanteBonus > 0)      sb.AppendLine($"+{item.asonanteBonus} Asonante");
-        if (item.discordanteBonus > 0)   sb.AppendLine($"+{item.discordanteBonus} Discordante");
-        if (item.consonanteBonus > 0)    sb.AppendLine($"+{item.consonanteBonus} Consonante");
+        if (item.AssonantBonus > 0)      sb.AppendLine($"+{item.AssonantBonus} Assonant");
+        if (item.DissonantBonus > 0)   sb.AppendLine($"+{item.DissonantBonus} Dissonant");
+        if (item.ConsonantBonus > 0)    sb.AppendLine($"+{item.ConsonantBonus} Consonant");
         return sb.ToString().TrimEnd();
     }
 }

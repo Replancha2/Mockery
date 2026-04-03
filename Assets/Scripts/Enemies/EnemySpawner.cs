@@ -34,7 +34,7 @@ public class EnemySpawner : MonoBehaviour
 
             var go = Instantiate(enemyPrefab, transform);
             var ei = go.GetComponent<EnemyInstance>();
-            ei.Init(d, data.EnemySpawns[i]);
+            ei.Init(d, pos);
             activeEnemies.Add(ei);
 
             // Add AI movement

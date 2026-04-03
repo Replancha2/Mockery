@@ -82,7 +82,7 @@ public class BeggarNPC : MonoBehaviour
         int damage = Mathf.RoundToInt(PlayerStats.Instance.maxHP * stabHPPercent);
         PlayerStats.Instance.TakeDamage(damage);
         BeggarUI.Instance?.ShowResult(BeggarOutcome.Stab);
-        if (PlayerStats.Instance.IsDead) GameManager.Instance.GameOver();
+        if (PlayerStats.Instance.CurrentHP <= 0) GameManager.Instance.GameOver();
     }
 }
 

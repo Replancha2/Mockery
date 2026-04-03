@@ -86,12 +86,6 @@ public class CombatManager : MonoBehaviour
     {
         Debug.Log($"[SPELL INITIATE] Player attempts to cast {spell}");
         
-        if (!PlayerStats.Instance.SpendMana()) 
-        { 
-            Debug.LogWarning("[SPELL FAIL] Not enough mana!"); 
-            return; 
-        }
-
         // Find target (adjacent enemy or none)
         if (currentCombatEnemy == null)
         {
@@ -157,13 +151,11 @@ public class CombatManager : MonoBehaviour
             enemyAttackCooldown = 0.5f;
         }
 
-        PlayerStats.Instance.RegenerateMana();
     }
 
     void HandleSpellFail()
     {
         Debug.LogWarning($"[SPELL FAIL] Wrong sequence for {selectedSpell}!");
-        PlayerStats.Instance.RegenerateMana();
         enemyAttackCooldown = 0f;
     }
 
