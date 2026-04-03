@@ -6,8 +6,11 @@ public class SongInputHandler : MonoBehaviour
     public static SongInputHandler Instance { get; private set; }
 
     public enum Dir { Up, Down, Left, Right }
-
-    public static readonly Dictionary<SpellType, Dir[]> Songs = new()
+    //Ahora los casteos son en tiempo real, Para lanzar un hechizo Consonante, el jugador debe presionar Q, luego Shift + W, Shift + W, Shift + A, Shift + A, Shift + D, Shift + D en ese orden y dentro del límite de tiempo. Si lo hace correctamente, se lanzará el hechizo Consonante. 
+    // Si se equivoca o se le acaba el tiempo, fallará el hechizo.
+    //Así mismo, para el hechizo Assonant, El jugador presiona E y la secuencia es Shift + A, Shift + S, Shift + A, Shift + S, Shift + A, Shift + S.
+    //  Y para el hechizo Dissonant, El jugador presiona R y la secuencia es Shift + S, Shift + S, Shift + D, Shift + S, Shift + S, Shift + D.
+    public static readonly Dictionary<SpellType, Dir[]> Songs = new() //Aqui hay 3 canciones, cada una con su propia secuencia de direcciones. Se pueden modificar para crear nuevas canciones o ajustar la dificultad.
     {
         { SpellType.Consonant, new[]{ Dir.Up, Dir.Up, Dir.Left, Dir.Left, Dir.Right, Dir.Right } },
         { SpellType.Assonant,  new[]{ Dir.Left, Dir.Down, Dir.Left, Dir.Down, Dir.Left, Dir.Down } },
