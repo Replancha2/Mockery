@@ -3,6 +3,8 @@ using DG.Tweening;
 
 public class GridMover : MonoBehaviour
 {
+    public static GridMover Instance { get; private set; }
+
     public float moveSpeed = 8f;
     public float turnSpeed = 10f;
 
@@ -10,7 +12,15 @@ public class GridMover : MonoBehaviour
     private float facing   = 0f; // 0=North 90=East 180=South 270=West
     private bool  isMoving = false;
 
+    public Vector2Int GridPos => gridPos;
+
     public const float CellSize = 4f;
+
+    void Awake()
+    {
+        if (Instance != null) { Destroy(gameObject); return; }
+        Instance = this;
+    }
 
     void Update()
     {
@@ -21,6 +31,10 @@ public class GridMover : MonoBehaviour
 
     void HandleInput()
     {
+        // Prevent movement while attempting spell casting
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+            return;
+
         if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
             TryMove(GetForwardDir());
         else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
@@ -42,7 +56,7 @@ public class GridMover : MonoBehaviour
         if (tag == RoomTag.Beggar && BeggarNPC.Instance != null) { BeggarNPC.Instance.Interact(); return; }
 
         EnemyInstance enemy = EnemySpawner.Instance.GetEnemyAt(target);
-        if (enemy != null) { CombatManager.Instance.StartCombat(enemy); return; }
+        if (enemy != null) { Debug.Log($"Enemy in the way! Combat will occur adjacent."); return; }
 
         ItemPickup item = ItemSpawner.Instance.GetItemAt(target);
         if (item != null) item.Collect();

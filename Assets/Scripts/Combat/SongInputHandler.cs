@@ -7,30 +7,36 @@ public class SongInputHandler : MonoBehaviour
 
     public enum Dir { Up, Down, Left, Right }
 
-    // 4-key sequences for each spell type (Helldivers-style)
-    public static readonly Dictionary<ElementType, Dir[]> Songs = new()
+    public static readonly Dictionary<SpellType, Dir[]> Songs = new()
     {
-        { ElementType.Asonante,    new[]{ Dir.Up,   Dir.Up,   Dir.Right, Dir.Up   } },
-        { ElementType.Discordante, new[]{ Dir.Left,  Dir.Down, Dir.Down,  Dir.Left } },
-        { ElementType.Consonante,  new[]{ Dir.Down,  Dir.Right, Dir.Right, Dir.Down } },
+        { SpellType.Consonant, new[]{ Dir.Up, Dir.Up, Dir.Left, Dir.Left, Dir.Right, Dir.Right } },
+        { SpellType.Assonant,  new[]{ Dir.Left, Dir.Down, Dir.Left, Dir.Down, Dir.Left, Dir.Down } },
+        { SpellType.Dissonant, new[]{ Dir.Down, Dir.Down, Dir.Right, Dir.Down, Dir.Down, Dir.Right } },
     };
 
-    public ElementType ActiveSong    { get; private set; }
-    public int         CurrentIndex  { get; private set; }
-    public float       TimeRemaining { get; private set; }
-    private bool       isActive;
-
-    public event System.Action<int> OnKeyCorrect; // passes new index
-    public event System.Action      OnSuccess;
-    public event System.Action      OnFail;
+    public SpellType ActiveSong    { get; private set; }
 
     void Awake()
     {
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
+
+        Debug.Log("Spell sequences (test):");
+        foreach (var kv in Songs)
+        {
+            Debug.Log($" - {kv.Key}: {string.Join(" ", System.Array.ConvertAll(kv.Value, d => d.ToString().ToUpper()))}");
+        }
     }
 
-    public void StartInput(ElementType song)
+    public int       CurrentIndex  { get; private set; }
+    public float   TimeRemaining { get; private set; }
+    private bool   isActive;
+
+    public event System.Action<int> OnKeyCorrect; // passes new index
+    public event System.Action      OnSuccess;
+    public event System.Action      OnFail;
+
+    public void StartInput(SpellType song)
     {
         ActiveSong    = song;
         CurrentIndex  = 0;
@@ -54,20 +60,24 @@ public class SongInputHandler : MonoBehaviour
         if (pressed == sequence[CurrentIndex])
         {
             CurrentIndex++;
+            Debug.Log($"[KEY INPUT] Correct! Step {CurrentIndex}/{sequence.Length} for {ActiveSong} ({pressed})");
             OnKeyCorrect?.Invoke(CurrentIndex);
             if (CurrentIndex >= sequence.Length) Success();
         }
         else
         {
+            Debug.LogWarning($"[KEY INPUT] WRONG! Expected {sequence[CurrentIndex]}, got {pressed}");
             Fail();
         }
     }
 
-    void Success() { isActive = false; OnSuccess?.Invoke(); }
-    void Fail()    { isActive = false; OnFail?.Invoke(); }
+    void Success() { isActive = false; Debug.Log($"[SPELL SEQUENCE] SUCCESS! {ActiveSong} sequence completed perfectly!"); OnSuccess?.Invoke(); }
+    void Fail()    { isActive = false; Debug.LogError($"[SPELL SEQUENCE] FAILED! {ActiveSong} sequence was interrupted or timed out!"); OnFail?.Invoke(); }
 
     Dir? GetPressedDir()
     {
+        if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift)) return null;
+
         if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))    return Dir.Up;
         if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))  return Dir.Down;
         if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))  return Dir.Left;

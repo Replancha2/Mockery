@@ -1,35 +1,29 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections.Generic;
+using System.Collections;
 
 public class CombatUIController : MonoBehaviour
 {
     public static CombatUIController Instance { get; private set; }
 
-    [Header("Panels")]
-    public GameObject combatPanel;
+    [Header("Combat HUD Overlay")]
+    public GameObject hudPanel;           // top-left HUD showing target info
+    public TextMeshProUGUI targetNameText;
+    public TextMeshProUGUI targetHPText;
+    public Image targetElementIcon;
+    
+    [Header("Feedback")]
+    public TextMeshProUGUI feedbackText;  // floating combat feedback (center-ish)
+    public TextMeshProUGUI playerHPText;  // player HP in HUD
 
-    [Header("Enemy Info")]
-    public Image           enemySprite;
-    public TextMeshProUGUI enemyNameText;
-    public Slider          enemyHPSlider;
+    [Header("Spell Sequence Display")]
+    public Image[] keyIcons;              // 6 sequence icons
+    public Sprite[] dirSprites;           // U/D/L/R sprites
+    public TextMeshProUGUI castingLabel;  // "Casting: Consonant" etc
 
-    [Header("Resistance Display (3 labels: Asonante / Discordante / Consonante)")]
-    public TextMeshProUGUI[] resistanceLabels; // index 0=Asonante 1=Discordante 2=Consonante
-
-    [Header("Sequence Display (4 icons)")]
-    public Image[]         keyIcons;   // 4 icons
-    public Sprite[]        dirSprites; // index: 0=Up 1=Down 2=Left 3=Right
-
-    [Header("Timer & Feedback")]
-    public Slider          timerBar;
-    public TextMeshProUGUI resultText;
-
-    [Header("Spell Buttons")]
-    public GameObject      songButtonsGroup;
-
-    private EnemyInstance activeEnemy;
+    private EnemyInstance displayedEnemy;
+    private float feedbackTimer = 0f;
 
     // Tracks which resistances the player has already discovered this combat
     private Dictionary<ElementType, ResistanceTier> revealed = new();
@@ -41,146 +35,112 @@ public class CombatUIController : MonoBehaviour
     {
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
-        combatPanel.SetActive(false);
+
+        if (hudPanel != null)
+            hudPanel.SetActive(false);
     }
 
     void Start()
     {
-        CombatManager.Instance.OnCombatStart += ShowCombat;
-        CombatManager.Instance.OnCombatEnd   += HideCombat;
-        SongInputHandler.Instance.OnKeyCorrect += UpdateSequenceDisplay;
+        if (SongInputHandler.Instance != null)
+            SongInputHandler.Instance.OnKeyCorrect += UpdateSequenceDisplay;
+
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.OnStatsChanged += UpdatePlayerHP;
+            UpdatePlayerHP();
+        }
     }
 
     void Update()
     {
-        if (GameManager.Instance.CurrentState != GameState.InCombat) return;
-        timerBar.value = SongInputHandler.Instance.TimeRemaining
-                       / FloorManager.Instance.GetInputTimeLimit();
+        feedbackTimer -= Time.deltaTime;
+        if (feedbackTimer <= 0 && feedbackText != null)
+            feedbackText.text = "";
+
+        // Update target HP in real-time
+        if (displayedEnemy != null && targetHPText != null)
+            targetHPText.text = $"HP: {displayedEnemy.CurrentHP}/{displayedEnemy.data.maxHP}";
     }
 
-    void ShowCombat(EnemyInstance enemy)
+    public void SetTargetEnemy(EnemyInstance enemy)
     {
-        activeEnemy = enemy;
-        revealed.Clear();
+        displayedEnemy = enemy;
+        if (enemy == null) { ClearTargetEnemy(); return; }
 
-        combatPanel.SetActive(true);
-        enemySprite.sprite     = enemy.data.sprite;
-        enemyNameText.text     = enemy.data.enemyName;
-        enemyHPSlider.maxValue = enemy.MaxHP;
-        enemyHPSlider.value    = enemy.CurrentHP;
-        resultText.text        = "";
+        if (hudPanel != null)
+            hudPanel.SetActive(true);
 
-        // Apply combat-start heal if player has that buff
-        if (PlayerStats.Instance.CombatStartHeal > 0)
-            PlayerStats.Instance.RestoreHP(PlayerStats.Instance.CombatStartHeal);
+        if (targetNameText != null)
+            targetNameText.text = $"{enemy.data.enemyName} ({enemy.data.element})";
 
-        RefreshResistanceLabels();
-        songButtonsGroup.SetActive(true);
+        if (targetHPText != null)
+            targetHPText.text = $"HP: {enemy.CurrentHP}/{enemy.data.maxHP}";
+
+        Debug.Log($"[HUD] Target set: {enemy.data.enemyName}");
     }
 
-    void HideCombat() => combatPanel.SetActive(false);
-
-    // Wired to each spell button's OnClick in inspector — pass 0=Asonante 1=Discordante 2=Consonante
-    public void OnSongSelected(int elementIndex)
+    public void ClearTargetEnemy()
     {
-        ElementType e = (ElementType)elementIndex;
-        BuildSequenceDisplay(e);
-        songButtonsGroup.SetActive(false);
-        CombatManager.Instance.SelectSong(e);
+        displayedEnemy = null;
+        if (hudPanel != null)
+            hudPanel.SetActive(false);
+        ClearSequenceDisplay();
     }
 
-    void BuildSequenceDisplay(ElementType e)
+    public void ShowSpellResult(string resultType, int damage)
     {
-        var seq = SongInputHandler.Songs[e];
-        for (int i = 0; i < keyIcons.Length; i++)
-        {
-            keyIcons[i].sprite = dirSprites[(int)seq[i]];
-            keyIcons[i].color  = Color.gray;
-        }
+        if (feedbackText == null) return;
+        feedbackText.text = $"{resultType} +{damage}";
+        feedbackText.color = resultType.Contains("RESONANT") ? Color.green : Color.yellow;
+        feedbackTimer = 1.5f;
+    }
+
+    public void ShowSpellMiss()
+    {
+        if (feedbackText == null) return;
+        feedbackText.text = "MISS! Wrong sequence!";
+        feedbackText.color = Color.red;
+        feedbackTimer = 1.5f;
+    }
+
+    public void ShowPlayerHit(int damageAmount)
+    {
+        if (feedbackText == null) return;
+        feedbackText.text = $"-{damageAmount} HP!";
+        feedbackText.color = Color.red;
+        feedbackTimer = 1.5f;
     }
 
     void UpdateSequenceDisplay(int newIndex)
     {
-        for (int i = 0; i < newIndex && i < keyIcons.Length; i++)
-            keyIcons[i].color = Color.white;
-    }
+        if (keyIcons == null) return;
 
-    // Called by CombatManager after player casts a spell
-    public void ShowResult(ResistanceTier tier, int damage)
-    {
-        // Reveal the resistance for the element that was just cast
-        ElementType cast = SongInputHandler.Instance.ActiveSong;
-        revealed[cast] = tier;
-        RefreshResistanceLabels();
-
-        resultText.text = tier switch
+        // Highlight completed keys in sequence
+        for (int i = 0; i < keyIcons.Length; i++)
         {
-            ResistanceTier.Weak   => $"RESONANTE!  -{damage} HP",
-            ResistanceTier.Normal => $"GOLPE!  -{damage} HP",
-            ResistanceTier.Immune => "SIN EFECTO...",
-            _                    => ""
-        };
-        enemyHPSlider.value = activeEnemy.CurrentHP;
-        Invoke(nameof(ReEnableSongButtons), 1.2f);
-    }
-
-    public void ShowFailFeedback()
-    {
-        resultText.text = "¡TECLAS INCORRECTAS!";
-        Invoke(nameof(ReEnableSongButtons), 1.2f);
-    }
-
-    // Called at the start of each player turn; dotDamage = 0 if no DOT was active
-    public void ShowNewTurn(int dotDamage)
-    {
-        if (dotDamage > 0)
-            resultText.text = $"Veneno: -{dotDamage} HP";
-        else
-            resultText.text = "";
-
-        enemyHPSlider.value = activeEnemy != null ? activeEnemy.CurrentHP : 0;
-        Invoke(nameof(ReEnableSongButtons), dotDamage > 0 ? 1.2f : 0f);
-    }
-
-    // Called by CombatManager after enemy acts
-    public void ShowEnemyAction(EnemyInstance.AbilityType ability, EnemyInstance enemy)
-    {
-        resultText.text = ability switch
-        {
-            EnemyInstance.AbilityType.Heal        => $"{enemy.data.enemyName} se cura!",
-            EnemyInstance.AbilityType.DOT         => $"{enemy.data.enemyName} te maldice!",
-            EnemyInstance.AbilityType.PowerStrike => $"{enemy.data.enemyName} golpe fuerte!",
-            _                                     => ""
-        };
-        enemyHPSlider.value = enemy.CurrentHP;
-    }
-
-    void RefreshResistanceLabels()
-    {
-        for (int i = 0; i < allElements.Length && i < resistanceLabels.Length; i++)
-        {
-            ElementType e = allElements[i];
-            if (revealed.TryGetValue(e, out ResistanceTier tier))
-            {
-                string tierText = tier switch
-                {
-                    ResistanceTier.Immune => "INMUNE",
-                    ResistanceTier.Normal => "NORMAL",
-                    ResistanceTier.Weak   => "DEBIL",
-                    _                    => "?"
-                };
-                resistanceLabels[i].text = $"{e}: {tierText}";
-            }
-            else
-            {
-                resistanceLabels[i].text = $"{e}: ?";
-            }
+            if (keyIcons[i] != null)
+                keyIcons[i].color = i < newIndex ? Color.green : Color.gray;
         }
     }
 
-    void ReEnableSongButtons()
+    void ClearSequenceDisplay()
     {
-        resultText.text = "";
-        songButtonsGroup.SetActive(true);
+        if (castingLabel != null)
+            castingLabel.text = "";
+
+        if (keyIcons == null) return;
+
+        foreach (var icon in keyIcons)
+        {
+            if (icon != null)
+                icon.color = Color.gray;
+        }
+    }
+
+    void UpdatePlayerHP()
+    {
+        if (playerHPText != null)
+            playerHPText.text = $"Player HP: {PlayerStats.Instance.CurrentHP}/{PlayerStats.Instance.maxHP}";
     }
 }

@@ -20,6 +20,12 @@ public class EnemyInstance : MonoBehaviour
         if (d.vfxPrefab) Instantiate(d.vfxPrefab, transform);
     }
 
+    public void SetGridPos(Vector2Int pos)
+    {
+        GridPos = pos;
+        transform.position = GridMover.GridToWorld(pos);
+    }
+
     // Returns true if enemy died
     public bool TakeDamage(int amount)
     {

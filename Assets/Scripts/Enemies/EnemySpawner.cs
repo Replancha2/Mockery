@@ -8,6 +8,7 @@ public class EnemySpawner : MonoBehaviour
     public EnemyData[] basicEnemies; // regular enemy templates — assign in inspector
     public EnemyData   bossData;     // dragon final boss
     public GameObject  enemyPrefab;
+    public Sprite      placeholderSprite; // assign a simple sprite for dungeon visibility
 
     private List<EnemyInstance> activeEnemies = new();
 
@@ -31,42 +32,19 @@ public class EnemySpawner : MonoBehaviour
                 ? bossData
                 : basicEnemies[Random.Range(0, basicEnemies.Length)];
 
-            SpawnEnemy(d, pos, mini: false);
+            var go = Instantiate(enemyPrefab, transform);
+            var ei = go.GetComponent<EnemyInstance>();
+            ei.Init(d, data.EnemySpawns[i]);
+            activeEnemies.Add(ei);
 
-            // Only place the boss once (at the first spawn point on the final floor)
-            if (isFinalFloor) break;
+            // Add AI movement
+            go.AddComponent<EnemyAI>();
+
+            // Add placeholder sprite for dungeon visibility
+            var sr = go.GetComponent<SpriteRenderer>();
+            if (sr == null) sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = placeholderSprite;
         }
-
-        // Mini-bosses (one per floor in the room before stairs)
-        if (!isFinalFloor)
-        {
-            foreach (var pos in data.MiniBossSpawns)
-            {
-                EnemyData d = basicEnemies[Random.Range(0, basicEnemies.Length)];
-                SpawnEnemy(d, pos, mini: true);
-            }
-        }
-    }
-
-    void SpawnEnemy(EnemyData d, Vector2Int pos, bool mini)
-    {
-        var go = Instantiate(enemyPrefab, transform);
-        var ei = go.GetComponent<EnemyInstance>();
-
-        // Override isMini at runtime without modifying the shared ScriptableObject
-        if (mini)
-        {
-            // Clone the data so we don't alter the asset
-            var cloned   = Instantiate(d);
-            cloned.isMini = true;
-            ei.Init(cloned, pos);
-        }
-        else
-        {
-            ei.Init(d, pos);
-        }
-
-        activeEnemies.Add(ei);
     }
 
     public EnemyInstance GetEnemyAt(Vector2Int pos)
