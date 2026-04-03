@@ -1,25 +1,23 @@
-public enum Element { Fire, Water, Earth, Wind }
+public enum SpellType { Consonant, Assonant, Dissonant }
 
 public static class ElementSystem
 {
-    // Cycle: Fire > Wind > Earth > Water > Fire
-    public static bool Beats(Element attacker, Element defender) =>
-        (attacker == Element.Fire  && defender == Element.Wind)  ||
-        (attacker == Element.Wind  && defender == Element.Earth) ||
-        (attacker == Element.Earth && defender == Element.Water) ||
-        (attacker == Element.Water && defender == Element.Fire);
+    // Cycle: Consonant > Dissonant > Assonant > Consonant
+    public static bool Beats(SpellType attacker, SpellType defender) =>
+        (attacker == SpellType.Consonant && defender == SpellType.Dissonant) ||
+        (attacker == SpellType.Dissonant  && defender == SpellType.Assonant) ||
+        (attacker == SpellType.Assonant  && defender == SpellType.Consonant);
 
-    public static Element GetCounter(Element e) => e switch
+    public static SpellType GetCounter(SpellType s) => s switch
     {
-        Element.Fire  => Element.Water,
-        Element.Water => Element.Wind,
-        Element.Wind  => Element.Earth,
-        Element.Earth => Element.Fire,
-        _             => Element.Fire
+        SpellType.Consonant => SpellType.Assonant,
+        SpellType.Assonant  => SpellType.Dissonant,
+        SpellType.Dissonant => SpellType.Consonant,
+        _                  => SpellType.Consonant
     };
 
     // 2 = super effective | 1 = neutral | 0 = not effective
-    public static int GetMultiplier(Element attack, Element defense)
+    public static int GetMultiplier(SpellType attack, SpellType defense)
     {
         if (Beats(attack, defense)) return 2;
         if (Beats(defense, attack)) return 0;

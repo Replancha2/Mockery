@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3302884882836845779}
   - component: {fileID: 4799564990801252228}
+  - component: {fileID: 8151197217549434529}
   m_Layer: 0
   m_Name: EnemyPrefab
   m_TagString: Untagged
@@ -45,3 +46,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyInstance
   data: {fileID: 0}
+--- !u!114 &8151197217549434529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3862683650480417168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 972be0dacbf6cb94fa79e454d508cce3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Billboard

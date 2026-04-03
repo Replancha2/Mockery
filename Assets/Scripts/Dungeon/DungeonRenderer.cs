@@ -11,6 +11,12 @@ public class DungeonRenderer : MonoBehaviour
     public GameObject ceilingPrefab;
     public GameObject stairsPrefab;
 
+    [Header("Wall Materials")]
+    public Material[] wallMaterials; // Drag Paredes1_01, Paredes1_02, Paredes1_03 materials here
+
+    [Header("Floor Materials")]
+    public Material[] floorMaterials; // Add materials for floor tiles
+
     private DungeonData currentData;
     private List<GameObject> spawnedObjects = new();
 
@@ -37,16 +43,22 @@ public class DungeonRenderer : MonoBehaviour
 
                 Vector3 worldPos = new Vector3(x * cell, 0, y * cell);
 
-                Spawn(floorPrefab,   worldPos,                     Quaternion.identity);
+                GameObject floor = Spawn(floorPrefab, worldPos, Quaternion.identity);
+                if (floorMaterials != null && floorMaterials.Length > 0)
+                {
+                    var mr = floor.GetComponent<MeshRenderer>();
+                    if (mr != null) mr.material = floorMaterials[Random.Range(0, floorMaterials.Length)];
+                }
+
                 Spawn(ceilingPrefab, worldPos + Vector3.up * cell, Quaternion.Euler(180, 0, 0));
 
                 if (pos2D == data.StairsPos)
                     Spawn(stairsPrefab, worldPos, Quaternion.identity);
 
-                SpawnWallIfNeeded(data, x, y, -1,  0, 270f);
-                SpawnWallIfNeeded(data, x, y,  1,  0,  90f);
-                SpawnWallIfNeeded(data, x, y,  0, -1, 180f);
-                SpawnWallIfNeeded(data, x, y,  0,  1,   0f);
+                SpawnWallIfNeeded(data, x, y, -1,  0,  90f);  // left wall, face inward (east)
+                SpawnWallIfNeeded(data, x, y,  1,  0, 270f);  // right wall, face inward (west)
+                SpawnWallIfNeeded(data, x, y,  0, -1,   0f);  // down wall, face inward (north)
+                SpawnWallIfNeeded(data, x, y,  0,  1, 180f);  // up wall, face inward (south)
             }
         }
     }
@@ -61,7 +73,17 @@ public class DungeonRenderer : MonoBehaviour
                 cell * 0.5f,
                 (y + dy * 0.5f) * cell
             );
-            Spawn(wallPrefab, wallPos, Quaternion.Euler(0, rotY, 0));
+            GameObject wall = Spawn(wallPrefab, wallPos, Quaternion.Euler(0, rotY, 0));
+
+            if (wallMaterials != null && wallMaterials.Length > 0)
+            {
+                MeshRenderer mr = wall.GetComponent<MeshRenderer>();
+                if (mr != null)
+                {
+                    Material pick = wallMaterials[Random.Range(0, wallMaterials.Length)];
+                    mr.material = pick;
+                }
+            }
         }
     }
 

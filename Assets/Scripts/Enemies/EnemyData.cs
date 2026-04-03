@@ -4,8 +4,8 @@ using UnityEngine;
 public class EnemyData : ScriptableObject
 {
     public string enemyName;
-    public Element element;
-    public Element secondPhaseElement; // boss only
+    public SpellType element;
+    public SpellType secondPhaseElement; // boss only
     public int maxHP;
     public int attackDamage;
     public bool isBoss;

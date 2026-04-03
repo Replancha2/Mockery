@@ -1,15 +1,16 @@
 using UnityEngine;
 
+/// Real-time DOOM-style combat: no turn-based UI, continuous action
 public class CombatManager : MonoBehaviour
 {
     public static CombatManager Instance { get; private set; }
 
-    public event System.Action<EnemyInstance> OnCombatStart;
-    public event System.Action                OnCombatEnd;
+    public event System.Action OnCombatEnd; // Invoked when enemy defeated
 
-    private EnemyInstance currentEnemy;
-    private Element       selectedSong;
-    private const int     BaseDamage = 10;
+    private EnemyInstance currentCombatEnemy;
+    private SpellType selectedSpell;
+    private float enemyAttackCooldown = 0f;
+    private const float AttackCooldownDuration = 2f;
 
     void Awake()
     {
@@ -19,75 +20,169 @@ public class CombatManager : MonoBehaviour
 
     void Start()
     {
-        SongInputHandler.Instance.OnSuccess += HandleSuccess;
-        SongInputHandler.Instance.OnFail    += HandleFail;
+        SongInputHandler.Instance.OnSuccess += HandleSpellSuccess;
+        SongInputHandler.Instance.OnFail    += HandleSpellFail;
     }
 
-    public void StartCombat(EnemyInstance enemy)
+    void Update()
     {
-        currentEnemy = enemy;
-        GameManager.Instance.SetState(GameState.InCombat);
-        OnCombatStart?.Invoke(enemy);
+        // Spell hotkeys (for testing)
+        if (Input.GetKeyDown(KeyCode.Q))
+            CastSpell(SpellType.Consonant);
+        if (Input.GetKeyDown(KeyCode.E))
+            CastSpell(SpellType.Assonant);
+        if (Input.GetKeyDown(KeyCode.R))
+            CastSpell(SpellType.Dissonant);
+
+        // Keep tracking nearest adjacent enemy
+        UpdateCombatTarget();
+        
+        // Real-time enemy attacks on cooldown
+        if (currentCombatEnemy != null)
+        {
+            enemyAttackCooldown -= Time.deltaTime;
+            if (enemyAttackCooldown <= 0)
+            {
+                EnemyAttack();
+                enemyAttackCooldown = AttackCooldownDuration;
+            }
+        }
     }
 
-    // Called by CombatUI when player presses a song button
-    public void SelectSong(Element song)
+    void UpdateCombatTarget()
     {
-        if (!PlayerStats.Instance.SpendMana()) { HandleFail(); return; }
-        selectedSong = song;
-        SongInputHandler.Instance.StartInput(song);
+        if (GridMover.Instance == null) return;
+
+        Vector2Int playerPos = GridMover.Instance.GridPos;
+        EnemyInstance nextTarget = null;
+
+        // Find first adjacent enemy
+        Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+        foreach (var dir in directions)
+        {
+            Vector2Int checkPos = playerPos + dir;
+            EnemyInstance enemy = EnemySpawner.Instance.GetEnemyAt(checkPos);
+            if (enemy != null)
+            {
+                nextTarget = enemy;
+                break;
+            }
+        }
+
+        if (nextTarget != currentCombatEnemy)
+        {
+            if (currentCombatEnemy != null)
+                Debug.Log($"[COMBAT END] Lost sight of {currentCombatEnemy.data.enemyName}");
+            
+            currentCombatEnemy = nextTarget;
+            enemyAttackCooldown = AttackCooldownDuration;
+            
+            if (currentCombatEnemy != null)
+                Debug.Log($"[COMBAT START] Engaged with {currentCombatEnemy.data.enemyName} ({currentCombatEnemy.data.element})");
+        }
     }
 
-    void HandleSuccess()
+    public void CastSpell(SpellType spell)
     {
-        int multiplier = ElementSystem.GetMultiplier(selectedSong, currentEnemy.data.element);
-        int damage     = PlayerStats.Instance.GetSongDamage(selectedSong, multiplier);
+        Debug.Log($"[SPELL INITIATE] Player attempts to cast {spell}");
+        
+        if (!PlayerStats.Instance.SpendMana()) 
+        { 
+            Debug.LogWarning("[SPELL FAIL] Not enough mana!"); 
+            return; 
+        }
+
+        // Find target (adjacent enemy or none)
+        if (currentCombatEnemy == null)
+        {
+            Debug.LogWarning("[SPELL CAST] No adjacent enemy - spell cast but no target!");
+        }
+        else
+        {
+            Debug.Log($"[SPELL TARGET] {currentCombatEnemy.data.enemyName}");
+        }
+
+        selectedSpell = spell;
+        Debug.Log($"[SPELL INPUT SEQUENCE] Player begins {spell} sequence...");
+        SongInputHandler.Instance.StartInput(spell);
+    }
+
+    void HandleSpellSuccess()
+    {
+        Debug.Log($"[SPELL SEQUENCE COMPLETE] {selectedSpell} successfully cast!");
+        
+        // If no enemy adjacent, spell fizzles harmlessly
+        if (currentCombatEnemy == null)
+        {
+            Debug.Log("[SPELL RESULT] Cast with no target - spell dispersed harmlessly");
+            return;
+        }
+
+        int multiplier = ElementSystem.GetMultiplier(selectedSpell, currentCombatEnemy.data.element);
+        int damage = PlayerStats.Instance.GetSongDamage(selectedSpell, multiplier);
+
+        string resultText = multiplier switch
+        {
+            2 => "RESONANT!",
+            1 => "HIT!",
+            0 => "NO EFFECT!",
+            _ => ""
+        };
+
+        Debug.Log($"[SPELL HIT] {selectedSpell} vs {currentCombatEnemy.data.element}: {resultText} (+{damage} dmg)");
 
         if (multiplier > 0)
         {
-            bool died = currentEnemy.TakeDamage(damage);
-            // Boss phase switch at half HP
-            if (currentEnemy.data.isBoss &&
-                currentEnemy.CurrentHP <= currentEnemy.data.maxHP / 2 &&
-                currentEnemy.data.secondPhaseElement != currentEnemy.data.element)
+            bool died = currentCombatEnemy.TakeDamage(damage);
+            Debug.Log($"[DAMAGE] {currentCombatEnemy.data.enemyName} HP: {currentCombatEnemy.CurrentHP}/{currentCombatEnemy.data.maxHP}");
+
+            if (currentCombatEnemy.data.isBoss &&
+                currentCombatEnemy.CurrentHP <= currentCombatEnemy.data.maxHP / 2 &&
+                currentCombatEnemy.data.secondPhaseElement != currentCombatEnemy.data.element)
             {
-                currentEnemy.data.element = currentEnemy.data.secondPhaseElement;
-                CombatUIController.Instance.ShowPhaseChange();
+                Debug.Log($"[BOSS PHASE 2] {currentCombatEnemy.data.enemyName} transforms!");
+                currentCombatEnemy.data.element = currentCombatEnemy.data.secondPhaseElement;
             }
-            if (died) { EnemySpawner.Instance.RemoveEnemy(currentEnemy); EndCombat(); return; }
+
+            if (died)
+            {
+                Debug.Log($"[VICTORY] {currentCombatEnemy.data.enemyName} defeated!");
+                EnemySpawner.Instance.RemoveEnemy(currentCombatEnemy);
+                currentCombatEnemy = null;
+                OnCombatEnd?.Invoke();
+                return;
+            }
+
+            enemyAttackCooldown = 0.5f;
         }
 
         PlayerStats.Instance.RegenerateMana();
-        CombatUIController.Instance.ShowResult(multiplier, damage);
-
-        if (multiplier != 2) EnemyAttacks();
     }
 
-    void HandleFail()
+    void HandleSpellFail()
     {
+        Debug.LogWarning($"[SPELL FAIL] Wrong sequence for {selectedSpell}!");
         PlayerStats.Instance.RegenerateMana();
-        CombatUIController.Instance.ShowFailFeedback();
-        EnemyAttacks();
+        enemyAttackCooldown = 0f;
     }
 
-    void EnemyAttacks()
+    void EnemyAttack()
     {
-        int dmg = currentEnemy.data.attackDamage;
+        if (currentCombatEnemy == null) return;
+
+        int dmg = currentCombatEnemy.data.attackDamage;
         if (PlayerStats.Instance.HasEarplugs) dmg = Mathf.Max(1, dmg - 2);
+        
         bool dead = PlayerStats.Instance.TakeDamage(dmg);
-        if (dead) { GameManager.Instance.GameOver(); return; }
-        CombatUIController.Instance.ShowNewTurn();
+        Debug.Log($"[ENEMY ATTACK] {currentCombatEnemy.data.enemyName} attacks! -{dmg} HP (Player HP: {PlayerStats.Instance.CurrentHP})");
+        
+        if (dead)
+        {
+            Debug.LogError("[GAME OVER] Player defeated!");
+            GameManager.Instance.GameOver();
+        }
     }
 
-    public void EndCombat()
-    {
-        GameManager.Instance.SetState(GameState.Exploring);
-        OnCombatEnd?.Invoke();
-    }
-
-    public void AttemptFlee()
-    {
-        if (UnityEngine.Random.value < 0.4f) EndCombat();
-        else EnemyAttacks();
-    }
+    public EnemyInstance GetCurrentEnemy() => currentCombatEnemy;
 }
+

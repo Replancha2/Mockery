@@ -12,9 +12,9 @@ public class PlayerStats : MonoBehaviour
     public int CurrentHP   { get; private set; }
     public int CurrentMana { get; private set; }
 
-    public bool    HasEarplugs  { get; private set; }
-    public Element BonusElement { get; private set; } = (Element)(-1);
-    public bool    HasSheetMusic => (int)BonusElement >= 0;
+    public bool      HasEarplugs  { get; private set; }
+    public SpellType BonusElement { get; private set; } = (SpellType)(-1);
+    public bool      HasSheetMusic => (int)BonusElement >= 0;
 
     public event System.Action OnStatsChanged;
 
@@ -60,10 +60,10 @@ public class PlayerStats : MonoBehaviour
         OnStatsChanged?.Invoke();
     }
 
-    public void ApplyEarplugs()            { HasEarplugs = true;   OnStatsChanged?.Invoke(); }
-    public void ApplySheetMusic(Element e) { BonusElement = e;     OnStatsChanged?.Invoke(); }
+    public void ApplyEarplugs()                      { HasEarplugs = true;   OnStatsChanged?.Invoke(); }
+    public void ApplySheetMusic(SpellType e)          { BonusElement = e;     OnStatsChanged?.Invoke(); }
 
-    public int GetSongDamage(Element song, int multiplier)
+    public int GetSongDamage(SpellType song, int multiplier)
     {
         int bonus = (HasSheetMusic && song == BonusElement) ? 5 : 0;
         return (10 + bonus) * multiplier;

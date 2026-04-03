@@ -8,6 +8,7 @@ public class EnemySpawner : MonoBehaviour
     public EnemyData[] basicEnemies;  // assign in inspector: one per element
     public EnemyData   bossFinalData;
     public GameObject  enemyPrefab;
+    public Sprite      placeholderSprite; // assign a simple sprite for dungeon visibility
 
     private List<EnemyInstance> activeEnemies = new();
 
@@ -34,6 +35,14 @@ public class EnemySpawner : MonoBehaviour
             var ei = go.GetComponent<EnemyInstance>();
             ei.Init(d, data.EnemySpawns[i]);
             activeEnemies.Add(ei);
+
+            // Add AI movement
+            go.AddComponent<EnemyAI>();
+
+            // Add placeholder sprite for dungeon visibility
+            var sr = go.GetComponent<SpriteRenderer>();
+            if (sr == null) sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = placeholderSprite;
         }
     }
 
