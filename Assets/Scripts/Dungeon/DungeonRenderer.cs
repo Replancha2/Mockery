@@ -17,6 +17,9 @@ public class DungeonRenderer : MonoBehaviour
     [Header("Floor Materials")]
     public Material[] floorMaterials; // Add materials for floor tiles
 
+    [Header("Ceiling Materials")]
+    public Material[] ceilingMaterials; // Add materials for ceiling tiles
+
     private DungeonData currentData;
     private List<GameObject> spawnedObjects = new();
 
@@ -43,14 +46,33 @@ public class DungeonRenderer : MonoBehaviour
 
                 Vector3 worldPos = new Vector3(x * cell, 0, y * cell);
 
-                GameObject floor = Spawn(floorPrefab, worldPos, Quaternion.Euler(-90, 0, 0));
+                GameObject floor = Spawn(floorPrefab, worldPos, Quaternion.Euler(90, 0, 0));
                 if (floorMaterials != null && floorMaterials.Length > 0)
                 {
                     var mr = floor.GetComponent<MeshRenderer>();
-                    if (mr != null) mr.material = floorMaterials[Random.Range(0, floorMaterials.Length)];
+                    if (mr != null)
+                    {
+                        Material selectedMat = floorMaterials[Random.Range(0, floorMaterials.Length)];
+                        if (selectedMat != null)
+                            mr.sharedMaterial = selectedMat;
+                    }
                 }
 
-                Spawn(ceilingPrefab, worldPos + Vector3.up * cell, Quaternion.Euler(90, 0, 0));
+                GameObject ceiling = Spawn(ceilingPrefab, worldPos + Vector3.up * cell, Quaternion.Euler(-90, 0, 0));
+                Material[] ceilingMatsToUse = (ceilingMaterials != null && ceilingMaterials.Length > 0) 
+                    ? ceilingMaterials 
+                    : floorMaterials;
+                
+                if (ceilingMatsToUse != null && ceilingMatsToUse.Length > 0)
+                {
+                    var mr = ceiling.GetComponent<MeshRenderer>();
+                    if (mr != null)
+                    {
+                        Material selectedMat = ceilingMatsToUse[Random.Range(0, ceilingMatsToUse.Length)];
+                        if (selectedMat != null)
+                            mr.sharedMaterial = selectedMat;
+                    }
+                }
 
                 if (pos2D == data.StairsPos)
                     Spawn(stairsPrefab, worldPos, Quaternion.identity);
@@ -81,7 +103,8 @@ public class DungeonRenderer : MonoBehaviour
                 if (mr != null)
                 {
                     Material pick = wallMaterials[Random.Range(0, wallMaterials.Length)];
-                    mr.material = pick;
+                    if (pick != null)
+                        mr.sharedMaterial = pick;
                 }
             }
         }

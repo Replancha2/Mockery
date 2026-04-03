@@ -6,24 +6,32 @@ public class DungeonOrchestrator : MonoBehaviour
 
     public void GenerateFloor()
     {
-        DungeonData data = BSPGenerator.Instance.Generate();
-        DungeonRenderer.Instance.Render(data);
-        EnemySpawner.Instance.SpawnEnemies(data, FloorManager.Instance.CurrentFloor);
-        ItemSpawner.Instance.SpawnItems(data);
-
-        // Place NPCs at their assigned rooms (only if singletons are in the scene)
-        if (VendorNPC.Instance != null) VendorNPC.Instance.InitForFloor(data.VendorPos);
-        if (BeggarNPC.Instance != null) BeggarNPC.Instance.InitForFloor(data.BeggarPos);
-
-        var mover = FindFirstObjectByType<GridMover>();
-        if (mover == null)
+        try
         {
-            Debug.LogError("DungeonOrchestrator: GridMover not found in scene!");
-            return;
-        }
+            DungeonData data = BSPGenerator.Instance.Generate();
+            DungeonRenderer.Instance.Render(data);
+            EnemySpawner.Instance.SpawnEnemies(data, FloorManager.Instance.CurrentFloor);
+            ItemSpawner.Instance.SpawnItems(data);
 
-        Debug.Log($"PlayerSpawn grid: {data.PlayerSpawn}  →  world: {GridMover.GridToWorld(data.PlayerSpawn)}");
-        mover.SetGridPosition(data.PlayerSpawn);
-        GameManager.Instance.SetState(GameState.Exploring);
+            // Place NPCs at their assigned rooms (only if singletons are in the scene)
+            if (VendorNPC.Instance != null) VendorNPC.Instance.InitForFloor(data.VendorPos);
+            if (BeggarNPC.Instance != null) BeggarNPC.Instance.InitForFloor(data.BeggarPos);
+
+            var mover = FindFirstObjectByType<GridMover>();
+            if (mover == null)
+            {
+                Debug.LogError("DungeonOrchestrator: GridMover not found in scene!");
+                return;
+            }
+
+            Debug.Log($"PlayerSpawn grid: {data.PlayerSpawn}  →  world: {GridMover.GridToWorld(data.PlayerSpawn)}");
+            mover.SetGridPosition(data.PlayerSpawn);
+            GameManager.Instance.SetState(GameState.Exploring);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Error generating floor: {ex}\n{ex.StackTrace}");
+            GameManager.Instance.SetState(GameState.Exploring);  // Reset state so player can move
+        }
     }
 }

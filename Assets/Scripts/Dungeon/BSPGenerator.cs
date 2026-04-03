@@ -36,6 +36,18 @@ public class BSPGenerator : MonoBehaviour
         PlaceEnemies(data, leaves);
         PlaceItems(data, leaves);
 
+        // Debug: Count walkable tiles
+        int walkableTiles = 0;
+        for (int x = 0; x < data.Width; x++)
+        {
+            for (int y = 0; y < data.Height; y++)
+            {
+                if (data.IsFloor(new Vector2Int(x, y)))
+                    walkableTiles++;
+            }
+        }
+        Debug.Log($"Generated dungeon: {leaves.Count} rooms, {walkableTiles} walkable tiles");
+
         return data;
     }
 
@@ -101,6 +113,8 @@ public class BSPGenerator : MonoBehaviour
 
         Vector2Int a = GetRoomCenter(node.Left);
         Vector2Int b = GetRoomCenter(node.Right);
+        
+        Debug.Log($"Connecting rooms: {a} -> {b}");
         CarveHorizontal(data, a, new Vector2Int(b.x, a.y));
         CarveVertical(data,   new Vector2Int(b.x, a.y), b);
     }
@@ -108,8 +122,8 @@ public class BSPGenerator : MonoBehaviour
     // Assigns special tags to rooms:
     //   leaves[0]       = PlayerSpawn (already set in CreateRooms)
     //   leaves[last]    = Stairs (+ MiniBoss spawn in same room)
-    //   leaves[last-1]  = Vendor
-    //   leaves[last-2]  = Beggar (if enough rooms exist)
+    //   leaves[last-1]  = Vendor (only the NPC tile, not the entire room)
+    //   leaves[last-2]  = Beggar (only the NPC tile, not the entire room)
     void TagRooms(DungeonData data, List<BSPNode> leaves)
     {
         int last = leaves.Count - 1;
@@ -122,22 +136,22 @@ public class BSPGenerator : MonoBehaviour
         data.MiniBossSpawns.Add(new Vector2Int(stairsRoom.x + 1, stairsRoom.y + 1));
         MarkTile(data, data.MiniBossSpawns[0], RoomTag.MiniBoss);
 
-        // Vendor room
+        // Vendor NPC - only mark the specific tile where the vendor is, not the entire room
         if (last >= 1)
         {
             var vendorRoom = leaves[last - 1].Room;
             data.VendorPos = new Vector2Int(vendorRoom.x + vendorRoom.width / 2,
                                             vendorRoom.y + vendorRoom.height / 2);
-            MarkRoom(data, vendorRoom, RoomTag.Vendor);
+            MarkTile(data, data.VendorPos, RoomTag.Vendor);
         }
 
-        // Beggar room
+        // Beggar NPC - only mark the specific tile where the beggar is, not the entire room
         if (last >= 2)
         {
             var beggarRoom = leaves[last - 2].Room;
             data.BeggarPos = new Vector2Int(beggarRoom.x + beggarRoom.width / 2,
                                             beggarRoom.y + beggarRoom.height / 2);
-            MarkRoom(data, beggarRoom, RoomTag.Beggar);
+            MarkTile(data, data.BeggarPos, RoomTag.Beggar);
         }
     }
 
@@ -181,17 +195,63 @@ public class BSPGenerator : MonoBehaviour
     void CarveHorizontal(DungeonData data, Vector2Int from, Vector2Int to)
     {
         int minX = Mathf.Min(from.x, to.x), maxX = Mathf.Max(from.x, to.x);
+        int carvedCount = 0;
+        
+        // Check if Y is in valid range
+        if (from.y < 0 || from.y >= data.Height)
+        {
+            Debug.LogWarning($"CarveHorizontal: Y coordinate {from.y} out of bounds! Map height: {data.Height}");
+            return;
+        }
+        
         for (int x = minX; x <= maxX; x++)
-            if (data.Cells[x, from.y] == CellType.Wall)
-                data.Cells[x, from.y] = CellType.Corridor;
+        {
+            if (x >= 0 && x < data.Width)
+            {
+                if (data.Cells[x, from.y] == CellType.Wall)
+                {
+                    data.Cells[x, from.y] = CellType.Corridor;
+                    carvedCount++;
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"CarveHorizontal: X coordinate {x} out of bounds!");
+            }
+        }
+        
+        Debug.Log($"  Carved horizontal: ({minX},{from.y}) to ({maxX},{from.y}) = {carvedCount} tiles");
     }
 
     void CarveVertical(DungeonData data, Vector2Int from, Vector2Int to)
     {
         int minY = Mathf.Min(from.y, to.y), maxY = Mathf.Max(from.y, to.y);
+        int carvedCount = 0;
+        
+        // Check if X is in valid range
+        if (from.x < 0 || from.x >= data.Width)
+        {
+            Debug.LogWarning($"CarveVertical: X coordinate {from.x} out of bounds! Map width: {data.Width}");
+            return;
+        }
+        
         for (int y = minY; y <= maxY; y++)
-            if (data.Cells[from.x, y] == CellType.Wall)
-                data.Cells[from.x, y] = CellType.Corridor;
+        {
+            if (y >= 0 && y < data.Height)
+            {
+                if (data.Cells[from.x, y] == CellType.Wall)
+                {
+                    data.Cells[from.x, y] = CellType.Corridor;
+                    carvedCount++;
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"CarveVertical: Y coordinate {y} out of bounds!");
+            }
+        }
+        
+        Debug.Log($"  Carved vertical: ({from.x},{minY}) to ({from.x},{maxY}) = {carvedCount} tiles");
     }
 
     Vector2Int GetRoomCenter(BSPNode node)
