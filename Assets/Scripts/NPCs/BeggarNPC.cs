@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class BeggarNPC : MonoBehaviour
 {
-    public static BeggarNPC Instance { get; private set; }
-
     [Header("Outcome Weights (must sum to 1)")]
     [Range(0f, 1f)] public float chanceGood    = 0.40f; // gives buff or item
     [Range(0f, 1f)] public float chanceNothing = 0.30f; // walks away
@@ -19,18 +17,16 @@ public class BeggarNPC : MonoBehaviour
     public Vector2Int GridPos          { get; private set; }
     public bool       AlreadyUsed      { get; private set; } = false;
 
-    void Awake()
-    {
-        if (Instance != null) { Destroy(gameObject); return; }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
-
     public void InitForFloor(Vector2Int pos)
     {
         GridPos    = pos;
+        transform.position = GridToWorld(pos);
+        Debug.Log($"BeggarNPC spawned at coordinates: {pos}");
         AlreadyUsed = false;
     }
+
+    private static Vector3 GridToWorld(Vector2Int pos)
+        => new Vector3(pos.x * 4f, 1.6f, pos.y * 4f);
 
     public void Interact()
     {

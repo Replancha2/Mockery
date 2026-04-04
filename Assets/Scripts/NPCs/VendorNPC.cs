@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 public class VendorNPC : MonoBehaviour
 {
-    public static VendorNPC Instance { get; private set; }
-
     [Header("Inventory")]
     public ItemData[] itemPool;      // all possible items — assign in inspector
     public int        stockSize = 3; // how many items are for sale per floor
@@ -14,25 +12,40 @@ public class VendorNPC : MonoBehaviour
 
     private bool dismissed = false;
 
-    void Awake()
-    {
-        if (Instance != null) { Destroy(gameObject); return; }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
-
-    // Called by DungeonOrchestrator each floor to set position and roll new stock
+    // Called by NPCSpawner each floor to set position and roll new stock
     public void InitForFloor(Vector2Int pos)
     {
         GridPos = pos;
+        transform.position = GridToWorld(pos);
+        Debug.Log($"VendorNPC spawned at coordinates: {pos}");
         dismissed = false;
         RollStock();
     }
 
+    private static Vector3 GridToWorld(Vector2Int pos)
+        => new Vector3(pos.x * 4f, 1.6f, pos.y * 4f);
+
     void RollStock()
     {
         CurrentStock.Clear();
-        var pool = new List<ItemData>(itemPool);
+        if (itemPool == null || itemPool.Length == 0)
+        {
+            Debug.LogWarning("VendorNPC: itemPool is empty. Vendor will have no stock.");
+            return;
+        }
+
+        var pool = new List<ItemData>();
+        foreach (var item in itemPool)
+        {
+            if (item != null) pool.Add(item);
+        }
+
+        if (pool.Count == 0)
+        {
+            Debug.LogWarning("VendorNPC: itemPool only contains null entries. Vendor will have no stock.");
+            return;
+        }
+
         for (int i = 0; i < stockSize && pool.Count > 0; i++)
         {
             int idx = Random.Range(0, pool.Count);
@@ -43,7 +56,10 @@ public class VendorNPC : MonoBehaviour
 
     public void OpenShop()
     {
-        if (dismissed || CurrentStock.Count == 0) return;
+        if (dismissed) return;
+        if (CurrentStock.Count == 0)
+            Debug.LogWarning("VendorNPC: Opening shop with empty stock.");
+
         GameManager.Instance.SetState(GameState.Shopping);
         if (ShopUI.Instance != null) ShopUI.Instance.Show(CurrentStock);
     }

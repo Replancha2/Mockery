@@ -12,10 +12,7 @@ public class DungeonOrchestrator : MonoBehaviour
             DungeonRenderer.Instance.Render(data);
             EnemySpawner.Instance.SpawnEnemies(data, FloorManager.Instance.CurrentFloor);
             ItemSpawner.Instance.SpawnItems(data);
-
-            // Place NPCs at their assigned rooms (only if singletons are in the scene)
-            if (VendorNPC.Instance != null) VendorNPC.Instance.InitForFloor(data.VendorPos);
-            if (BeggarNPC.Instance != null) BeggarNPC.Instance.InitForFloor(data.BeggarPos);
+            NPCSpawner.Instance.SpawnNPCs(data);
 
             var mover = FindFirstObjectByType<GridMover>();
             if (mover == null)

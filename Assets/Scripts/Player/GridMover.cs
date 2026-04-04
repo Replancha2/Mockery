@@ -73,6 +73,20 @@ public class GridMover : MonoBehaviour
         RoomTag tag = DungeonRenderer.Instance.GetRoomTag(target);
         Debug.Log($"  Room tag at {target}: {tag}");
 
+        // Handle NPC interactions
+        if (tag == RoomTag.Vendor)
+        { 
+            var vendor = NPCSpawner.Instance.GetVendor();
+            if (vendor != null) vendor.OpenShop();
+            return;
+        }
+        if (tag == RoomTag.Beggar)
+        {
+            var beggar = NPCSpawner.Instance.GetBeggar();
+            if (beggar != null) beggar.Interact();
+            return;
+        }
+
         EnemyInstance enemy = EnemySpawner.Instance.GetEnemyAt(target);
         if (enemy != null) 
         { 

@@ -36,7 +36,10 @@ public class ShopUI : MonoBehaviour
             int idx = i;
             itemButtons[i].onClick.AddListener(() => TryBuy(idx));
         }
-        closeButton.onClick.AddListener(VendorNPC.Instance.CloseShop);
+        closeButton.onClick.AddListener(() => {
+            var vendor = NPCSpawner.Instance.GetVendor();
+            if (vendor != null) vendor.CloseShop();
+        });
         PlayerStats.Instance.OnStatsChanged += RefreshGoldLabel;
     }
 
@@ -58,28 +61,57 @@ public class ShopUI : MonoBehaviour
     void TryBuy(int index)
     {
         if (index >= stock.Count) return;
-        VendorNPC.Instance.BuyItem(stock[index]);
+        var vendor = NPCSpawner.Instance.GetVendor();
+        if (vendor != null) vendor.BuyItem(stock[index]);
         RefreshSlots();
     }
 
     void RefreshSlots()
     {
+        if (stock == null) stock = new List<ItemData>();
+
         for (int i = 0; i < itemButtons.Length; i++)
         {
+            if (itemButtons[i] == null)
+            {
+                Debug.LogWarning($"ShopUI: itemButtons[{i}] is not assigned.");
+                continue;
+            }
+
             bool hasItem = i < stock.Count;
             itemButtons[i].gameObject.SetActive(hasItem);
             if (!hasItem) continue;
 
             ItemData item = stock[i];
-            itemNameLabels[i].text  = item.itemName;
-            itemPriceLabels[i].text = $"{item.buyPrice} oro";
-            itemDescLabels[i].text  = BuildStatDesc(item);
-            itemButtons[i].interactable = FloorManager.Instance.Gold >= item.buyPrice;
+            if (item == null)
+            {
+                Debug.LogWarning($"ShopUI: stock[{i}] is null. Check Vendor itemPool assignments.");
+                itemButtons[i].gameObject.SetActive(false);
+                continue;
+            }
+
+            if (i < itemNameLabels.Length && itemNameLabels[i] != null)
+                itemNameLabels[i].text = item.itemName;
+            else
+                Debug.LogWarning($"ShopUI: itemNameLabels[{i}] is missing.");
+
+            if (i < itemPriceLabels.Length && itemPriceLabels[i] != null)
+                itemPriceLabels[i].text = $"{item.buyPrice} oro";
+            else
+                Debug.LogWarning($"ShopUI: itemPriceLabels[{i}] is missing.");
+
+            if (i < itemDescLabels.Length && itemDescLabels[i] != null)
+                itemDescLabels[i].text = BuildStatDesc(item);
+            else
+                Debug.LogWarning($"ShopUI: itemDescLabels[{i}] is missing.");
+
+            itemButtons[i].interactable = FloorManager.Instance != null && FloorManager.Instance.Gold >= item.buyPrice;
         }
     }
 
     void RefreshGoldLabel()
     {
+        if (goldLabel == null || FloorManager.Instance == null) return;
         goldLabel.text = $"Oro: {FloorManager.Instance.Gold}";
         RefreshBuyButtonStates();
     }
@@ -87,8 +119,16 @@ public class ShopUI : MonoBehaviour
     void RefreshBuyButtonStates()
     {
         for (int i = 0; i < itemButtons.Length; i++)
-            if (i < stock.Count)
-                itemButtons[i].interactable = FloorManager.Instance.Gold >= stock[i].buyPrice;
+        {
+            if (itemButtons[i] == null) continue;
+            if (i >= stock.Count || stock[i] == null || FloorManager.Instance == null)
+            {
+                itemButtons[i].interactable = false;
+                continue;
+            }
+
+            itemButtons[i].interactable = FloorManager.Instance.Gold >= stock[i].buyPrice;
+        }
     }
 
     string BuildStatDesc(ItemData item)
