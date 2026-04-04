@@ -50,8 +50,14 @@ public class FloorManager : MonoBehaviour
     {
         CurrentFloor++;
         if (CurrentFloor > MaxFloors)
+        {
+            HUDController.Instance?.Log("You escaped the dungeon. Victory!");
             GameManager.Instance.Victory();
+        }
         else
+        {
+            HUDController.Instance?.Log($"You descend to floor {CurrentFloor}.");
             GameManager.Instance.SetState(GameState.BuffSelection);
+        }
     }
 }

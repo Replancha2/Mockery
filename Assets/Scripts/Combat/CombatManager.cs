@@ -71,14 +71,14 @@ public class CombatManager : MonoBehaviour
 
         if (nextTarget != currentCombatEnemy)
         {
-            if (currentCombatEnemy != null)
-                Debug.Log($"[COMBAT END] Lost sight of {currentCombatEnemy.data.enemyName}");
-            
             currentCombatEnemy = nextTarget;
             enemyAttackCooldown = AttackCooldownDuration;
-            
+
             if (currentCombatEnemy != null)
+            {
                 Debug.Log($"[COMBAT START] Engaged with {currentCombatEnemy.data.enemyName} ({currentCombatEnemy.data.element})");
+                HUDController.Instance?.Log($"You encounter {currentCombatEnemy.data.enemyName}!");
+            }
         }
     }
 
@@ -131,17 +131,24 @@ public class CombatManager : MonoBehaviour
             bool died = currentCombatEnemy.TakeDamage(damage);
             Debug.Log($"[DAMAGE] {currentCombatEnemy.data.enemyName} HP: {currentCombatEnemy.CurrentHP}/{currentCombatEnemy.data.maxHP}");
 
+            string hitMsg = multiplier == 2
+                ? $"Resonance! {selectedSpell} deals {damage} damage to {currentCombatEnemy.data.enemyName}."
+                : $"{selectedSpell} deals {damage} damage to {currentCombatEnemy.data.enemyName}.";
+            HUDController.Instance?.Log(hitMsg);
+
             if (currentCombatEnemy.data.isBoss &&
                 currentCombatEnemy.CurrentHP <= currentCombatEnemy.data.maxHP / 2 &&
                 currentCombatEnemy.data.secondPhaseElement != currentCombatEnemy.data.element)
             {
                 Debug.Log($"[BOSS PHASE 2] {currentCombatEnemy.data.enemyName} transforms!");
                 currentCombatEnemy.data.element = currentCombatEnemy.data.secondPhaseElement;
+                HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} shifts element!");
             }
 
             if (died)
             {
                 Debug.Log($"[VICTORY] {currentCombatEnemy.data.enemyName} defeated!");
+                HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} defeated!");
                 EnemySpawner.Instance.RemoveEnemy(currentCombatEnemy);
                 currentCombatEnemy = null;
                 OnCombatEnd?.Invoke();
@@ -150,12 +157,17 @@ public class CombatManager : MonoBehaviour
 
             enemyAttackCooldown = 0.5f;
         }
+        else
+        {
+            HUDController.Instance?.Log($"{selectedSpell} has no effect on {currentCombatEnemy.data.enemyName}.");
+        }
 
     }
 
     void HandleSpellFail()
     {
         Debug.LogWarning($"[SPELL FAIL] Wrong sequence for {selectedSpell}!");
+        HUDController.Instance?.Log($"Wrong sequence for {selectedSpell}!");
         enemyAttackCooldown = 0f;
     }
 
@@ -168,7 +180,8 @@ public class CombatManager : MonoBehaviour
         
         bool dead = PlayerStats.Instance.TakeDamage(dmg);
         Debug.Log($"[ENEMY ATTACK] {currentCombatEnemy.data.enemyName} attacks! -{dmg} HP (Player HP: {PlayerStats.Instance.CurrentHP})");
-        
+        HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} hits you for {dmg} damage.");
+
         if (dead)
         {
             Debug.LogError("[GAME OVER] Player defeated!");

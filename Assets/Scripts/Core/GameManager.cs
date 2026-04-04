@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
     {
         FloorManager.Instance.ResetRun();
         PlayerStats.Instance.ResetForNewRun();
+        PlayerInventory.Instance.ResetInventory();
         SceneManager.LoadScene("Game");
         SetState(GameState.Exploring);
     }
