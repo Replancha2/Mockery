@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Feather_004
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Broken Feather Assonant of Tone #4
+  itemName: Common Feather Assonant of Tone
   slot: 4
   elementBonus: 1
   icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 2
+  buyPrice: 1
   hpBonus: 2
   defenseBonus: 0
-  AssonantBonus: 3
+  AssonantBonus: 1
   DissonantBonus: 0
   ConsonantBonus: 0
