@@ -1,27 +1,31 @@
 using UnityEngine;
 
+public struct BeggarResult
+{
+    public BeggarOutcome outcome;
+    public string        rewardName;
+}
+
 public class BeggarNPC : MonoBehaviour
 {
-    [Header("Outcome Weights (must sum to 1)")]
-    [Range(0f, 1f)] public float chanceGood    = 0.40f; // gives buff or item
-    [Range(0f, 1f)] public float chanceNothing = 0.30f; // walks away
-    // remaining probability = stab
+    [Header("Outcome Weights")]
+    [Range(0f, 1f)] public float chanceGood    = 0.40f;
+    [Range(0f, 1f)] public float chanceNothing = 0.30f;
 
     [Header("Stab")]
-    [Range(0f, 1f)] public float stabHPPercent = 0.35f; // fraction of maxHP lost
+    [Range(0f, 1f)] public float stabHPPercent = 0.35f;
 
     [Header("Good Reward Pool")]
     public BuffData[] buffPool;
     public ItemData[] itemPool;
 
-    public Vector2Int GridPos          { get; private set; }
-    public bool       AlreadyUsed      { get; private set; } = false;
+    public Vector2Int GridPos     { get; private set; }
+    public bool       AlreadyUsed { get; private set; } = false;
 
     public void InitForFloor(Vector2Int pos)
     {
-        GridPos    = pos;
+        GridPos = pos;
         transform.position = GridToWorld(pos);
-        Debug.Log($"BeggarNPC spawned at coordinates: {pos}");
         AlreadyUsed = false;
     }
 
@@ -31,30 +35,37 @@ public class BeggarNPC : MonoBehaviour
     public void Interact()
     {
         if (AlreadyUsed) return;
+        BeggarUI.Instance?.Open(this);
+    }
 
-        // Prompt player through UI — for now, auto-interact if player has gold
-        if (FloorManager.Instance.Gold < 1) return;
-
+    // Called by BeggarUI when player chooses to give gold
+    public BeggarResult ResolveGive()
+    {
         AlreadyUsed = true;
         FloorManager.Instance.SpendGold(1);
 
         float roll = Random.value;
 
         if (roll < chanceGood)
-        {
-            GiveReward();
-        }
-        else if (roll < chanceGood + chanceNothing)
-        {
-            BeggarUI.Instance?.ShowResult(BeggarOutcome.Nothing);
-        }
-        else
-        {
-            Stab();
-        }
+            return GiveReward();
+
+        if (roll < chanceGood + chanceNothing)
+            return new BeggarResult { outcome = BeggarOutcome.Nothing };
+
+        return ResolveStab();
     }
 
-    void GiveReward()
+    // Called by BeggarUI when player has no gold — auto stab
+    public BeggarResult ResolveStab()
+    {
+        AlreadyUsed = true;
+        int damage = Mathf.RoundToInt(PlayerStats.Instance.maxHP * stabHPPercent);
+        PlayerStats.Instance.TakeDamage(damage);
+        if (PlayerStats.Instance.CurrentHP <= 0) GameManager.Instance.GameOver();
+        return new BeggarResult { outcome = BeggarOutcome.Stab };
+    }
+
+    BeggarResult GiveReward()
     {
         bool giveBuff = Random.value > 0.5f && buffPool.Length > 0;
 
@@ -62,23 +73,17 @@ public class BeggarNPC : MonoBehaviour
         {
             BuffData buff = buffPool[Random.Range(0, buffPool.Length)];
             FloorManager.Instance.ApplyBuff(buff);
-            BeggarUI.Instance?.ShowResult(BeggarOutcome.Buff, buff.buffName);
+            return new BeggarResult { outcome = BeggarOutcome.Buff, rewardName = buff.buffName };
         }
-        else if (itemPool.Length > 0)
+
+        if (itemPool.Length > 0)
         {
             ItemData item = itemPool[Random.Range(0, itemPool.Length)];
-            var mover = FindFirstObjectByType<GridMover>();
-            ItemSpawner.Instance.SpawnItemAt(item, mover.GetGridPos());
-            BeggarUI.Instance?.ShowResult(BeggarOutcome.Item, item.itemName);
+            ItemSpawner.Instance.SpawnItemAt(item, FindFirstObjectByType<GridMover>().GetGridPos());
+            return new BeggarResult { outcome = BeggarOutcome.Item, rewardName = item.itemName };
         }
-    }
 
-    void Stab()
-    {
-        int damage = Mathf.RoundToInt(PlayerStats.Instance.maxHP * stabHPPercent);
-        PlayerStats.Instance.TakeDamage(damage);
-        BeggarUI.Instance?.ShowResult(BeggarOutcome.Stab);
-        if (PlayerStats.Instance.CurrentHP <= 0) GameManager.Instance.GameOver();
+        return new BeggarResult { outcome = BeggarOutcome.Nothing };
     }
 }
 

@@ -12,7 +12,10 @@ public class DungeonOrchestrator : MonoBehaviour
             DungeonRenderer.Instance.Render(data);
             EnemySpawner.Instance.SpawnEnemies(data, FloorManager.Instance.CurrentFloor);
             ItemSpawner.Instance.SpawnItems(data);
-            NPCSpawner.Instance.SpawnNPCs(data);
+            if (NPCSpawner.Instance != null)
+                NPCSpawner.Instance.SpawnNPCs(data);
+            else
+                Debug.LogWarning("DungeonOrchestrator: NPCSpawner not found in scene, skipping NPC spawn.");
 
             var mover = FindFirstObjectByType<GridMover>();
             if (mover == null)

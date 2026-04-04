@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections.Generic;
 
@@ -21,6 +22,7 @@ public class ShopUI : MonoBehaviour
     public Button          closeButton;
 
     private List<ItemData> stock = new();
+    private VendorNPC _currentVendor;
 
     void Awake()
     {
@@ -36,11 +38,21 @@ public class ShopUI : MonoBehaviour
             int idx = i;
             itemButtons[i].onClick.AddListener(() => TryBuy(idx));
         }
-        closeButton.onClick.AddListener(() => {
-            var vendor = NPCSpawner.Instance.GetVendor();
-            if (vendor != null) vendor.CloseShop();
-        });
+        closeButton.onClick.AddListener(() => _currentVendor?.CloseShop());
         PlayerStats.Instance.OnStatsChanged += RefreshGoldLabel;
+    }
+
+    void Update()
+    {
+        if (!panel.activeSelf) return;
+        if (Input.GetKeyDown(KeyCode.Escape))
+            _currentVendor?.CloseShop();
+        if (Input.GetMouseButtonDown(0))
+        {
+            var rt = closeButton.GetComponent<RectTransform>();
+            if (RectTransformUtility.RectangleContainsScreenPoint(rt, Input.mousePosition, null))
+                _currentVendor?.CloseShop();
+        }
     }
 
     void OnDestroy()
@@ -48,21 +60,25 @@ public class ShopUI : MonoBehaviour
         if (PlayerStats.Instance) PlayerStats.Instance.OnStatsChanged -= RefreshGoldLabel;
     }
 
-    public void Show(List<ItemData> vendorStock)
+    public void Show(VendorNPC vendor, List<ItemData> vendorStock)
     {
+        _currentVendor = vendor;
         stock = vendorStock;
         RefreshSlots();
         RefreshGoldLabel();
         panel.SetActive(true);
     }
 
-    public void Hide() => panel.SetActive(false);
+    public void Hide()
+    {
+        _currentVendor = null;
+        panel.SetActive(false);
+    }
 
     void TryBuy(int index)
     {
         if (index >= stock.Count) return;
-        var vendor = NPCSpawner.Instance.GetVendor();
-        if (vendor != null) vendor.BuyItem(stock[index]);
+        _currentVendor?.BuyItem(stock[index]);
         RefreshSlots();
     }
 
@@ -96,7 +112,7 @@ public class ShopUI : MonoBehaviour
                 Debug.LogWarning($"ShopUI: itemNameLabels[{i}] is missing.");
 
             if (i < itemPriceLabels.Length && itemPriceLabels[i] != null)
-                itemPriceLabels[i].text = $"{item.buyPrice} oro";
+                itemPriceLabels[i].text = $"{item.buyPrice} Gold";
             else
                 Debug.LogWarning($"ShopUI: itemPriceLabels[{i}] is missing.");
 
@@ -112,7 +128,7 @@ public class ShopUI : MonoBehaviour
     void RefreshGoldLabel()
     {
         if (goldLabel == null || FloorManager.Instance == null) return;
-        goldLabel.text = $"Oro: {FloorManager.Instance.Gold}";
+        goldLabel.text = $"Gold: {FloorManager.Instance.Gold}";
         RefreshBuyButtonStates();
     }
 

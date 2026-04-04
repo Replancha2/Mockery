@@ -781,7 +781,7 @@ EventSystem
 | Buff_Cons | Armonía Pura | SpellDamageBonus | Consonant | 5 |
 | Buff_DOT | Resistencia al Veneno | DOTResistance | — | 2 |
 | Buff_Heal | Adrenalina | HealOnCombatStart | — | 8 |
-| Buff_Gold | Dedos de Oro | GoldBonus | — | 2 |
+| Buff_Gold | Dedos de Gold | GoldBonus | — | 2 |
 
 Fill in `description` on each — shown in `BuffSelectionUI`.
 
@@ -875,7 +875,7 @@ Canvas settings: **Screen Space — Overlay**, CanvasScaler → Scale With Scree
 HUD
   HPBar          ← Slider
   FloorLabel     ← TMP   "Piso 1 / 5"
-  GoldLabel      ← TMP   "Oro: 0"
+  GoldLabel      ← TMP   "Gold: 0"
   DOTLabel       ← TMP   "⚠ MALDITO"  (starts hidden — script toggles it)
 ```
 Wire `HUDController`:

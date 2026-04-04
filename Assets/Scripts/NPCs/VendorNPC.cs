@@ -61,7 +61,7 @@ public class VendorNPC : MonoBehaviour
             Debug.LogWarning("VendorNPC: Opening shop with empty stock.");
 
         GameManager.Instance.SetState(GameState.Shopping);
-        if (ShopUI.Instance != null) ShopUI.Instance.Show(CurrentStock);
+        if (ShopUI.Instance != null) ShopUI.Instance.Show(this, CurrentStock);
     }
 
     // Called by ShopUI when a purchase is made
@@ -71,13 +71,19 @@ public class VendorNPC : MonoBehaviour
         CurrentStock.Remove(item);
         // Spawn the item at the player's feet so ItemPickup.Collect() handles applying stats
         ItemSpawner.Instance.SpawnItemAt(item, FindFirstObjectByType<GridMover>().GetGridPos());
-        if (CurrentStock.Count == 0) CloseShop();
+        if (CurrentStock.Count == 0) DismissShop();
     }
 
     public void CloseShop()
     {
-        dismissed = true;
         GameManager.Instance.SetState(GameState.Exploring);
         if (ShopUI.Instance != null) ShopUI.Instance.Hide();
+    }
+
+    // Called when stock is exhausted — vendor can't be reopened this floor
+    void DismissShop()
+    {
+        dismissed = true;
+        CloseShop();
     }
 }
