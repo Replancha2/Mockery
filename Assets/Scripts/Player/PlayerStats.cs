@@ -8,11 +8,13 @@ public class PlayerStats : MonoBehaviour
     [Header("Base Stats")]
     public int maxHP         = 30;
     public int baseSpellDamage = 10;
+    public int startingPotionCharges = 3;
 
     public int CurrentHP { get; private set; }
+    public int PotionCharges { get; private set; }
 
     public int DefenseBonus     { get; private set; }
-    public int CombatStartHeal  { get; private set; }
+    public int FloorHealBonusPercent { get; private set; }
     public int GoldBonusPerKill { get; private set; }
 
     public bool      HasEarplugs  { get; private set; }
@@ -40,6 +42,7 @@ public class PlayerStats : MonoBehaviour
     void Start()
     {
         CurrentHP = maxHP;
+        PotionCharges = startingPotionCharges;
     }
 
     public void ResetForNewRun()
@@ -48,8 +51,9 @@ public class PlayerStats : MonoBehaviour
         foreach (var key in new List<SpellType>(spellDamageBonuses.Keys))
             spellDamageBonuses[key] = 0;
         DefenseBonus     = 0;
-        CombatStartHeal  = 0;
+        FloorHealBonusPercent = 0;
         GoldBonusPerKill = 0;
+        PotionCharges = startingPotionCharges;
         OnStatsChanged?.Invoke();
     }
 
@@ -80,21 +84,48 @@ public class PlayerStats : MonoBehaviour
     // Called by BuffData.Apply()
     public void AddMaxHP(int amount)
     {
-        maxHP     += amount;
-        CurrentHP  = Mathf.Min(CurrentHP + amount, maxHP);
+        maxHP = Mathf.Max(1, maxHP + amount);
+        CurrentHP = Mathf.Clamp(CurrentHP + amount, 0, maxHP);
         OnStatsChanged?.Invoke();
     }
 
     public void AddDefenseBonus(int amount)    { DefenseBonus     += amount; OnStatsChanged?.Invoke(); }
-    public void AddCombatStartHeal(int amount) { CombatStartHeal  += amount; OnStatsChanged?.Invoke(); }
+    public void AddFloorHealBonusPercent(int amount) { FloorHealBonusPercent += amount; OnStatsChanged?.Invoke(); }
     public void AddGoldBonus(int amount)       { GoldBonusPerKill += amount; OnStatsChanged?.Invoke(); }
+
+    public bool TryUsePotion()
+    {
+        if (PotionCharges <= 0) return false;
+        if (CurrentHP >= maxHP) return false;
+
+        int healAmount = Mathf.Max(1, Mathf.CeilToInt(maxHP * 0.25f));
+        PotionCharges--;
+        CurrentHP = Mathf.Min(maxHP, CurrentHP + healAmount);
+        OnStatsChanged?.Invoke();
+        return true;
+    }
+
+    public void AddPotionCharges(int amount)
+    {
+        PotionCharges = Mathf.Max(0, PotionCharges + amount);
+        OnStatsChanged?.Invoke();
+    }
+
+    public int GetFloorHealAmount()
+    {
+        float totalPercent = 0.25f + (FloorHealBonusPercent / 100f);
+        int amount = Mathf.CeilToInt(maxHP * totalPercent);
+        return Mathf.Max(1, amount);
+    }
 
     public void ApplyEarplugs()               { HasEarplugs  = true; OnStatsChanged?.Invoke(); }
     public void ApplySheetMusic(SpellType e)   { BonusElement = e;    OnStatsChanged?.Invoke(); }
 
-    public int GetSongDamage(SpellType song, int multiplier)
+    public int GetSongDamage(SpellType song, float multiplier)
     {
         int bonus = (HasSheetMusic && song == BonusElement) ? 5 : 0;
-        return (baseSpellDamage + bonus + spellDamageBonuses[song]) * multiplier;
+        int rawDamage = baseSpellDamage + bonus + spellDamageBonuses[song];
+        if (multiplier <= 0f) return 0;
+        return Mathf.Max(1, Mathf.RoundToInt(rawDamage * multiplier));
     }
 }

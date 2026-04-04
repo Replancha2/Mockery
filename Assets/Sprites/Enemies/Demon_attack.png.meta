@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d2beaf475f7158643883836fbf5ec67e
+guid: 1727c2b52a9440e4bb1c1eaca6da2ce3
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -110,13 +110,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Waton_idle_0
+      name: Demon_attack_0
       rect:
         serializedVersion: 2
-        x: 534
-        y: 42
-        width: 852
-        height: 966
+        x: 744
+        y: 24
+        width: 612
+        height: 732
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,8 +125,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 02b0e310611e0384e8804f6318830a2b
-      internalID: -187749519
+      spriteID: 9b0b317b6e0b23447afeb1ce60c21697
+      internalID: -1712313082
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 21c5e0c7223da3e40b937d8870ebf18e
+    spriteID: 51b941ce6329f514a99f39b938a07bdd
     internalID: 0
     vertices: []
     indices: 
@@ -147,7 +147,8 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Waton_idle_0: -187749519
+      Demon_attack_0: -1712313082
+      Demon_attack_1: 555387560
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

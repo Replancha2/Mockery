@@ -69,8 +69,11 @@ public class VendorNPC : MonoBehaviour
     {
         if (!FloorManager.Instance.SpendGold(item.buyPrice)) return;
         CurrentStock.Remove(item);
-        // Spawn the item at the player's feet so ItemPickup.Collect() handles applying stats
-        ItemSpawner.Instance.SpawnItemAt(item, FindFirstObjectByType<GridMover>().GetGridPos());
+        var result = PlayerInventory.Instance.AcquireItem(item);
+        if (result == PlayerInventory.ItemAcquireResult.StoredInBackpack)
+            HUDController.Instance?.Log($"Backpack: {item.itemName}");
+        else
+            HUDController.Instance?.Log($"Equipped {item.itemName} ({item.slot}).");
         if (CurrentStock.Count == 0) DismissShop();
     }
 

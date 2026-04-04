@@ -1,26 +1,33 @@
 public enum SpellType { Consonant, Assonant, Dissonant }
 
+public enum SpellHitResult { Extra, Reduced, Immune }
+
 public static class ElementSystem
 {
-    // Cycle: Consonant > Dissonant > Assonant > Consonant
-    public static bool Beats(SpellType attacker, SpellType defender) =>
-        (attacker == SpellType.Consonant && defender == SpellType.Dissonant) ||
-        (attacker == SpellType.Dissonant  && defender == SpellType.Assonant) ||
-        (attacker == SpellType.Assonant  && defender == SpellType.Consonant);
-
-    public static SpellType GetCounter(SpellType s) => s switch
+    // Resistance matrix:
+    // Dissonant resistance: Extra from Assonant, Immune to Dissonant, Reduced from Consonant
+    // Consonant resistance: Extra from Dissonant, Immune to Consonant, Reduced from Assonant
+    // Assonant resistance: Extra from Consonant, Immune to Assonant, Reduced from Dissonant
+    public static SpellHitResult GetHitResult(SpellType attack, SpellType resistance)
     {
-        SpellType.Consonant => SpellType.Assonant,
-        SpellType.Assonant  => SpellType.Dissonant,
-        SpellType.Dissonant => SpellType.Consonant,
-        _                  => SpellType.Consonant
+        if (attack == resistance) return SpellHitResult.Immune;
+        if (attack == GetStrongAgainstResistance(resistance)) return SpellHitResult.Extra;
+        return SpellHitResult.Reduced;
+    }
+
+    public static float GetDamageMultiplier(SpellHitResult result) => result switch
+    {
+        SpellHitResult.Extra   => 2f,
+        SpellHitResult.Reduced => 0.5f,
+        SpellHitResult.Immune  => 0f,
+        _                     => 1f,
     };
 
-    // 2 = super effective | 1 = neutral | 0 = not effective
-    public static int GetMultiplier(SpellType attack, SpellType defense)
+    public static SpellType GetStrongAgainstResistance(SpellType resistance) => resistance switch
     {
-        if (Beats(attack, defense)) return 2;
-        if (Beats(defense, attack)) return 0;
-        return 1;
-    }
+        SpellType.Dissonant => SpellType.Assonant,
+        SpellType.Consonant => SpellType.Dissonant,
+        SpellType.Assonant  => SpellType.Consonant,
+        _                  => SpellType.Consonant,
+    };
 }

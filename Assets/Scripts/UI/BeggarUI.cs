@@ -30,9 +30,7 @@ public class BeggarUI : MonoBehaviour
 
     void Start()
     {
-        giveButton.onClick.AddListener(OnGive);
-        refuseButton.onClick.AddListener(Hide);
-        closeButton.onClick.AddListener(Hide);
+        // Intentionally using manual click hit-testing in Update for reliability.
     }
 
     void Update()
@@ -40,28 +38,46 @@ public class BeggarUI : MonoBehaviour
         if (!panel.activeSelf) return;
         if (Input.GetKeyDown(KeyCode.Escape))
             Hide();
-        if (Input.GetMouseButtonDown(0))
+
+        if (!Input.GetMouseButtonDown(0)) return;
+
+        if (choiceGroup.activeSelf)
         {
-            if (choiceGroup.activeSelf)
+            if (HitsButton(giveButton))
             {
-                if (HitsButton(giveButton))   OnGive();
-                if (HitsButton(refuseButton)) Hide();
+                OnGive();
+                return;
             }
-            else if (resultGroup.activeSelf && HitsButton(closeButton))
+
+            if (HitsButton(refuseButton))
+            {
                 Hide();
+                return;
+            }
+        }
+        else if (resultGroup.activeSelf && HitsButton(closeButton))
+        {
+            Hide();
+            return;
         }
     }
 
     bool HitsButton(Button btn)
     {
+        if (btn == null) return false;
         var rt = btn.GetComponent<RectTransform>();
-        return RectTransformUtility.RectangleContainsScreenPoint(rt, Input.mousePosition, null);
+        return rt != null && RectTransformUtility.RectangleContainsScreenPoint(rt, Input.mousePosition, null);
     }
 
     public void Open(BeggarNPC beggar)
     {
         _currentBeggar = beggar;
         GameManager.Instance.SetState(GameState.Shopping);
+        ResetUIState();
+
+        if (messageText != null)
+            messageText.text = "Spare a coin?";
+
         panel.SetActive(true);
 
         if (FloorManager.Instance.Gold >= 1)
@@ -75,8 +91,21 @@ public class BeggarUI : MonoBehaviour
         }
     }
 
-    void OnGive()
+    void ResetUIState()
     {
+        if (messageText != null)
+            messageText.text = string.Empty;
+
+        if (choiceGroup != null)
+            choiceGroup.SetActive(false);
+
+        if (resultGroup != null)
+            resultGroup.SetActive(false);
+    }
+
+    void OnGive()
+    {   
+        if (_currentBeggar == null) return;
         ShowResult(_currentBeggar.ResolveGive());
     }
 
@@ -97,6 +126,7 @@ public class BeggarUI : MonoBehaviour
 
     public void Hide()
     {
+        ResetUIState();
         _currentBeggar = null;
         panel.SetActive(false);
         GameManager.Instance.SetState(GameState.Exploring);

@@ -5,6 +5,10 @@ public class CombatManager : MonoBehaviour
 {
     public static CombatManager Instance { get; private set; }
 
+    [Header("Rewards")]
+    [SerializeField] private int minGoldPerKill = 1;
+    [SerializeField] private int maxGoldPerKill = 5;
+
     public event System.Action OnCombatEnd; // Invoked when enemy defeated
 
     private EnemyInstance currentCombatEnemy;
@@ -76,7 +80,7 @@ public class CombatManager : MonoBehaviour
 
             if (currentCombatEnemy != null)
             {
-                Debug.Log($"[COMBAT START] Engaged with {currentCombatEnemy.data.enemyName} ({currentCombatEnemy.data.element})");
+                Debug.Log($"[COMBAT START] Engaged with {currentCombatEnemy.data.enemyName} (Resist: {currentCombatEnemy.Resistance})");
                 HUDController.Instance?.Log($"You encounter {currentCombatEnemy.data.enemyName}!");
             }
         }
@@ -113,42 +117,53 @@ public class CombatManager : MonoBehaviour
             return;
         }
 
-        int multiplier = ElementSystem.GetMultiplier(selectedSpell, currentCombatEnemy.data.element);
+        SpellHitResult hitResult = ElementSystem.GetHitResult(selectedSpell, currentCombatEnemy.Resistance);
+        float multiplier = ElementSystem.GetDamageMultiplier(hitResult);
         int damage = PlayerStats.Instance.GetSongDamage(selectedSpell, multiplier);
 
-        string resultText = multiplier switch
+        string resultText = hitResult switch
         {
-            2 => "RESONANT!",
-            1 => "HIT!",
-            0 => "NO EFFECT!",
+            SpellHitResult.Extra => "RESONANT!",
+            SpellHitResult.Reduced => "WEAK HIT!",
+            SpellHitResult.Immune => "NO EFFECT!",
             _ => ""
         };
 
-        Debug.Log($"[SPELL HIT] {selectedSpell} vs {currentCombatEnemy.data.element}: {resultText} (+{damage} dmg)");
+        Debug.Log($"[SPELL HIT] {selectedSpell} vs {currentCombatEnemy.Resistance} resistance: {resultText} (+{damage} dmg)");
 
-        if (multiplier > 0)
+        if (hitResult != SpellHitResult.Immune)
         {
             bool died = currentCombatEnemy.TakeDamage(damage);
             Debug.Log($"[DAMAGE] {currentCombatEnemy.data.enemyName} HP: {currentCombatEnemy.CurrentHP}/{currentCombatEnemy.data.maxHP}");
 
-            string hitMsg = multiplier == 2
+            string hitMsg = hitResult == SpellHitResult.Extra
                 ? $"Resonance! {selectedSpell} deals {damage} damage to {currentCombatEnemy.data.enemyName}."
-                : $"{selectedSpell} deals {damage} damage to {currentCombatEnemy.data.enemyName}.";
+                : hitResult == SpellHitResult.Reduced
+                    ? $"{selectedSpell} is resisted and deals {damage} damage to {currentCombatEnemy.data.enemyName}."
+                    : $"{selectedSpell} deals {damage} damage to {currentCombatEnemy.data.enemyName}.";
             HUDController.Instance?.Log(hitMsg);
 
             if (currentCombatEnemy.data.isBoss &&
                 currentCombatEnemy.CurrentHP <= currentCombatEnemy.data.maxHP / 2 &&
-                currentCombatEnemy.data.secondPhaseElement != currentCombatEnemy.data.element)
+                currentCombatEnemy.data.secondPhaseElement != currentCombatEnemy.Resistance)
             {
                 Debug.Log($"[BOSS PHASE 2] {currentCombatEnemy.data.enemyName} transforms!");
-                currentCombatEnemy.data.element = currentCombatEnemy.data.secondPhaseElement;
+                currentCombatEnemy.SetResistance(currentCombatEnemy.data.secondPhaseElement);
+                EnemySpawner.Instance?.RefreshEnemyVisual(currentCombatEnemy);
                 HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} shifts element!");
             }
 
             if (died)
             {
+                int rollMin = Mathf.Min(minGoldPerKill, maxGoldPerKill);
+                int rollMax = Mathf.Max(minGoldPerKill, maxGoldPerKill);
+                int goldReward = Random.Range(rollMin, rollMax + 1) + PlayerStats.Instance.GoldBonusPerKill;
+                goldReward = Mathf.Max(1, goldReward);
+                FloorManager.Instance?.AddGold(goldReward);
+
                 Debug.Log($"[VICTORY] {currentCombatEnemy.data.enemyName} defeated!");
                 HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} defeated!");
+                HUDController.Instance?.Log($"You found {goldReward} gold.");
                 EnemySpawner.Instance.RemoveEnemy(currentCombatEnemy);
                 currentCombatEnemy = null;
                 OnCombatEnd?.Invoke();
@@ -174,6 +189,8 @@ public class CombatManager : MonoBehaviour
     void EnemyAttack()
     {
         if (currentCombatEnemy == null) return;
+
+        currentCombatEnemy.TriggerAttackVisual();
 
         int dmg = currentCombatEnemy.data.attackDamage;
         if (PlayerStats.Instance.HasEarplugs) dmg = Mathf.Max(1, dmg - 2);

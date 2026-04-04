@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d2beaf475f7158643883836fbf5ec67e
+guid: 7759efcdf8f9ccb4da5a3fb7869d4973
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -110,13 +110,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Waton_idle_0
+      name: Bard01_0
       rect:
         serializedVersion: 2
-        x: 534
-        y: 42
-        width: 852
-        height: 966
+        x: 540
+        y: 738
+        width: 120
+        height: 90
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,8 +125,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 02b0e310611e0384e8804f6318830a2b
-      internalID: -187749519
+      spriteID: af99c1ae6c92bfe41a7d1c27380dda4f
+      internalID: -2077612414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Bard01_1
+      rect:
+        serializedVersion: 2
+        x: 1212
+        y: 714
+        width: 228
+        height: 252
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3371eb5ca3700c94ebb1f4470d322d20
+      internalID: -376776101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Bard01_2
+      rect:
+        serializedVersion: 2
+        x: 1506
+        y: 720
+        width: 228
+        height: 252
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a3635bce65fbc984ab32b6fd6f966797
+      internalID: -1252508704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Bard01_3
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 120
+        width: 240
+        height: 354
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2283052f6cef7c947bda1631ae628b3c
+      internalID: 630302421
       vertices: []
       indices: 
       edges: []
@@ -135,7 +201,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 21c5e0c7223da3e40b937d8870ebf18e
+    spriteID: 0b4d838c9dc4e0549a08590d7ba2d27a
     internalID: 0
     vertices: []
     indices: 
@@ -147,7 +213,10 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Waton_idle_0: -187749519
+      Bard01_0: -2077612414
+      Bard01_1: -376776101
+      Bard01_2: -1252508704
+      Bard01_3: 630302421
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

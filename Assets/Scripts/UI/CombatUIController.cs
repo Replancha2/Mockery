@@ -69,7 +69,7 @@ public class CombatUIController : MonoBehaviour
             hudPanel.SetActive(true);
 
         if (targetNameText != null)
-            targetNameText.text = $"{enemy.data.enemyName} ({enemy.data.element})";
+            targetNameText.text = $"{enemy.data.enemyName} ({enemy.Resistance} Resistant)";
 
         if (targetHPText != null)
             targetHPText.text = $"HP: {enemy.CurrentHP}/{enemy.data.maxHP}";

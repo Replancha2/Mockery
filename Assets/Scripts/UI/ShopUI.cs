@@ -39,7 +39,7 @@ public class ShopUI : MonoBehaviour
             itemButtons[i].onClick.AddListener(() => TryBuy(idx));
         }
         closeButton.onClick.AddListener(() => _currentVendor?.CloseShop());
-        PlayerStats.Instance.OnStatsChanged += RefreshGoldLabel;
+        if (FloorManager.Instance != null) FloorManager.Instance.OnGoldChanged += OnGoldChanged;
     }
 
     void Update()
@@ -57,7 +57,7 @@ public class ShopUI : MonoBehaviour
 
     void OnDestroy()
     {
-        if (PlayerStats.Instance) PlayerStats.Instance.OnStatsChanged -= RefreshGoldLabel;
+        if (FloorManager.Instance) FloorManager.Instance.OnGoldChanged -= OnGoldChanged;
     }
 
     public void Show(VendorNPC vendor, List<ItemData> vendorStock)
@@ -130,6 +130,12 @@ public class ShopUI : MonoBehaviour
         if (goldLabel == null || FloorManager.Instance == null) return;
         goldLabel.text = $"Gold: {FloorManager.Instance.Gold}";
         RefreshBuyButtonStates();
+    }
+
+    void OnGoldChanged(int _)
+    {
+        if (!panel.activeSelf) return;
+        RefreshGoldLabel();
     }
 
     void RefreshBuyButtonStates()

@@ -83,6 +83,7 @@ public class BuffSelectionUI : MonoBehaviour
     {
         if (index >= offered.Count) return;
         FloorManager.Instance.ApplyBuff(offered[index]);
+        FloorManager.Instance.ApplyStartOfFloorEffects();
         panel.SetActive(false);
         orchestrator.GenerateFloor();
     }

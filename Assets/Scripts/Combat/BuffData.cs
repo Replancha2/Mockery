@@ -5,7 +5,7 @@ public enum BuffEffectType
     HPBonus,             // raises maxHP and heals the difference
     SpellDamageBonus,    // +value to one SpellType's base damage
     DefenseBonus,        // flat damage reduction on all incoming hits
-    HealOnCombatStart,   // restores value HP at the start of every combat
+    HealOnCombatStart,   // legacy name: now +value% healing when reaching a new floor
     GoldBonus,           // +value gold per enemy kill
 }
 
@@ -33,7 +33,7 @@ public class BuffData : ScriptableObject
                 PlayerStats.Instance.AddDefenseBonus(value);
                 break;
             case BuffEffectType.HealOnCombatStart:
-                PlayerStats.Instance.AddCombatStartHeal(value);
+                PlayerStats.Instance.AddFloorHealBonusPercent(value);
                 break;
             case BuffEffectType.GoldBonus:
                 PlayerStats.Instance.AddGoldBonus(value);

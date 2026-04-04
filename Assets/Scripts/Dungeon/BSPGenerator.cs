@@ -10,12 +10,30 @@ public class BSPGenerator : MonoBehaviour
     public int mapHeight = 40;
 
     [Header("BSP Settings")]
-    public int minLeafSize = 8;
-    public int maxLeafSize = 16;
+    public int minLeafSize = 5;
+    public int maxLeafSize = 10;
+
+    [Header("Room Shape")]
+    [Range(0.35f, 0.90f)] public float minRoomFillRatio = 0.35f;
+    [Range(0.45f, 0.98f)] public float maxRoomFillRatio = 0.58f;
+    public int roomBoundaryPadding = 1;
+
+    [Header("Corridor Density")]
+    [Range(0f, 1f)] public float extraConnectionChance = 0.75f;
+    [Range(0, 3)] public int maxExtraConnectionsPerNode = 2;
+    [Range(0f, 1f)] public float jaggedCorridorChance = 0.80f;
+    [Range(1, 4)] public int jaggedOffsetTiles = 2;
+
+    [Header("Corridor Turns")]
+    [Range(1, 4)] public int minCorridorTurns = 2;
+    [Range(2, 6)] public int maxCorridorTurns = 4;
 
     [Header("Spawn Counts")]
     public int enemiesPerFloor = 4;
     public int itemsPerFloor   = 3;
+
+    [Header("Boss Floor")]
+    [SerializeField] private int bossFloorRoomMargin = 2;
 
     void Awake()
     {
@@ -26,6 +44,26 @@ public class BSPGenerator : MonoBehaviour
     public DungeonData Generate()
     {
         var data   = new DungeonData(mapWidth, mapHeight);
+
+        bool isBossFloor = FloorManager.Instance != null && FloorManager.Instance.CurrentFloor >= FloorManager.MaxFloors;
+        if (isBossFloor)
+        {
+            GenerateBossFloor(data);
+
+            int bossWalkableTiles = 0;
+            for (int x = 0; x < data.Width; x++)
+            {
+                for (int y = 0; y < data.Height; y++)
+                {
+                    if (data.IsFloor(new Vector2Int(x, y)))
+                        bossWalkableTiles++;
+                }
+            }
+
+            Debug.Log($"Generated boss floor: 1 room, {bossWalkableTiles} walkable tiles");
+            return data;
+        }
+
         var root   = new BSPNode(new RectInt(0, 0, mapWidth, mapHeight));
         var leaves = new List<BSPNode>();
 
@@ -49,6 +87,41 @@ public class BSPGenerator : MonoBehaviour
         Debug.Log($"Generated dungeon: {leaves.Count} rooms, {walkableTiles} walkable tiles");
 
         return data;
+    }
+
+    void GenerateBossFloor(DungeonData data)
+    {
+        int margin = Mathf.Clamp(bossFloorRoomMargin, 1, Mathf.Max(1, Mathf.Min(data.Width, data.Height) / 3));
+
+        int xMin = margin;
+        int yMin = margin;
+        int xMax = data.Width - margin - 1;
+        int yMax = data.Height - margin - 1;
+
+        for (int x = xMin; x <= xMax; x++)
+        {
+            for (int y = yMin; y <= yMax; y++)
+                data.Cells[x, y] = CellType.Floor;
+        }
+
+        Vector2Int roomCenter = new Vector2Int((xMin + xMax) / 2, (yMin + yMax) / 2);
+        data.PlayerSpawn = new Vector2Int(roomCenter.x, Mathf.Clamp(yMin + 2, yMin, yMax));
+
+        Vector2Int bossPos = roomCenter;
+        if (bossPos == data.PlayerSpawn)
+            bossPos = new Vector2Int(roomCenter.x, Mathf.Clamp(roomCenter.y + 2, yMin, yMax));
+
+        data.EnemySpawns.Clear();
+        data.EnemySpawns.Add(bossPos);
+
+        data.ItemSpawns.Clear();
+        data.MiniBossSpawns.Clear();
+
+        data.VendorPos = Vector2Int.zero;
+        data.BeggarPos = Vector2Int.zero;
+
+        data.StairsPos = new Vector2Int(roomCenter.x, Mathf.Clamp(yMax - 1, yMin, yMax));
+        MarkTile(data, data.StairsPos, RoomTag.Stairs);
     }
 
     void Split(BSPNode node, List<BSPNode> leaves)
@@ -91,10 +164,27 @@ public class BSPGenerator : MonoBehaviour
         bool first = true;
         foreach (var leaf in leaves)
         {
-            int w = Random.Range(4, leaf.Bounds.width  - 2);
-            int h = Random.Range(4, leaf.Bounds.height - 2);
-            int x = leaf.Bounds.x + Random.Range(1, leaf.Bounds.width  - w - 1);
-            int y = leaf.Bounds.y + Random.Range(1, leaf.Bounds.height - h - 1);
+            int maxRoomWidth = Mathf.Max(3, leaf.Bounds.width - roomBoundaryPadding * 2);
+            int maxRoomHeight = Mathf.Max(3, leaf.Bounds.height - roomBoundaryPadding * 2);
+
+            float minFill = Mathf.Min(minRoomFillRatio, maxRoomFillRatio);
+            float maxFill = Mathf.Max(minRoomFillRatio, maxRoomFillRatio);
+
+            int minRoomWidth = Mathf.Clamp(Mathf.RoundToInt(leaf.Bounds.width * minFill), 3, maxRoomWidth);
+            int minRoomHeight = Mathf.Clamp(Mathf.RoundToInt(leaf.Bounds.height * minFill), 3, maxRoomHeight);
+            int targetRoomWidth = Mathf.Clamp(Mathf.RoundToInt(leaf.Bounds.width * maxFill), minRoomWidth, maxRoomWidth);
+            int targetRoomHeight = Mathf.Clamp(Mathf.RoundToInt(leaf.Bounds.height * maxFill), minRoomHeight, maxRoomHeight);
+
+            int w = Random.Range(minRoomWidth, targetRoomWidth + 1);
+            int h = Random.Range(minRoomHeight, targetRoomHeight + 1);
+
+            int xMin = leaf.Bounds.x + roomBoundaryPadding;
+            int yMin = leaf.Bounds.y + roomBoundaryPadding;
+            int xMaxStart = leaf.Bounds.x + leaf.Bounds.width - roomBoundaryPadding - w;
+            int yMaxStart = leaf.Bounds.y + leaf.Bounds.height - roomBoundaryPadding - h;
+
+            int x = xMaxStart <= xMin ? xMin : Random.Range(xMin, xMaxStart + 1);
+            int y = yMaxStart <= yMin ? yMin : Random.Range(yMin, yMaxStart + 1);
             leaf.Room = new RectInt(x, y, w, h);
 
             for (int rx = x; rx < x + w; rx++)
@@ -115,8 +205,85 @@ public class BSPGenerator : MonoBehaviour
         Vector2Int b = GetRoomCenter(node.Right);
         
         Debug.Log($"Connecting rooms: {a} -> {b}");
-        CarveHorizontal(data, a, new Vector2Int(b.x, a.y));
-        CarveVertical(data,   new Vector2Int(b.x, a.y), b);
+        CarveCorridorPath(data, a, b, useJagged: Random.value < jaggedCorridorChance);
+
+        int extraAttempts = Random.Range(0, maxExtraConnectionsPerNode + 1);
+        for (int i = 0; i < extraAttempts; i++)
+        {
+            if (Random.value <= extraConnectionChance)
+            {
+                Vector2Int ea = GetRoomCenter(node.Left);
+                Vector2Int eb = GetRoomCenter(node.Right);
+                CarveCorridorPath(data, ea, eb, useJagged: true);
+            }
+        }
+    }
+
+    void CarveCorridorPath(DungeonData data, Vector2Int from, Vector2Int to, bool useJagged)
+    {
+        int minTurns = Mathf.Min(minCorridorTurns, maxCorridorTurns);
+        int maxTurns = Mathf.Max(minCorridorTurns, maxCorridorTurns);
+        int turns = useJagged ? Random.Range(minTurns, maxTurns + 1) : 1;
+
+        CarveWindingCorridor(data, from, to, turns);
+    }
+
+    void CarveWindingCorridor(DungeonData data, Vector2Int from, Vector2Int to, int turns)
+    {
+        Vector2Int current = from;
+        bool horizontalStep = Random.value > 0.5f;
+
+        for (int i = 0; i < turns; i++)
+        {
+            Vector2Int next = current;
+
+            if (horizontalStep)
+            {
+                float t = Random.Range(0.2f, 0.8f);
+                int baseX = Mathf.RoundToInt(Mathf.Lerp(current.x, to.x, t));
+                int jitter = Random.Range(-jaggedOffsetTiles, jaggedOffsetTiles + 1);
+                next.x = Mathf.Clamp(baseX + jitter, 1, data.Width - 2);
+            }
+            else
+            {
+                float t = Random.Range(0.2f, 0.8f);
+                int baseY = Mathf.RoundToInt(Mathf.Lerp(current.y, to.y, t));
+                int jitter = Random.Range(-jaggedOffsetTiles, jaggedOffsetTiles + 1);
+                next.y = Mathf.Clamp(baseY + jitter, 1, data.Height - 2);
+            }
+
+            if (next != current)
+            {
+                if (horizontalStep)
+                    CarveHorizontal(data, current, next);
+                else
+                    CarveVertical(data, current, next);
+
+                current = next;
+            }
+
+            horizontalStep = !horizontalStep;
+        }
+
+        CarveSegmentL(data, current, to);
+    }
+
+    void CarveSegmentL(DungeonData data, Vector2Int a, Vector2Int b)
+    {
+        // Randomize L orientation so corridors don't always feel orthogonal in the same way.
+        bool horizontalFirst = Random.value > 0.5f;
+        if (horizontalFirst)
+        {
+            Vector2Int bend = new Vector2Int(b.x, a.y);
+            CarveHorizontal(data, a, bend);
+            CarveVertical(data, bend, b);
+        }
+        else
+        {
+            Vector2Int bend = new Vector2Int(a.x, b.y);
+            CarveVertical(data, a, bend);
+            CarveHorizontal(data, bend, b);
+        }
     }
 
     // Assigns special tags to rooms:

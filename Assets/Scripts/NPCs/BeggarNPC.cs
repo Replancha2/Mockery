@@ -79,7 +79,11 @@ public class BeggarNPC : MonoBehaviour
         if (itemPool.Length > 0)
         {
             ItemData item = itemPool[Random.Range(0, itemPool.Length)];
-            ItemSpawner.Instance.SpawnItemAt(item, FindFirstObjectByType<GridMover>().GetGridPos());
+            var result = PlayerInventory.Instance.AcquireItem(item);
+            if (result == PlayerInventory.ItemAcquireResult.StoredInBackpack)
+                HUDController.Instance?.Log($"Backpack: {item.itemName}");
+            else
+                HUDController.Instance?.Log($"Equipped {item.itemName} ({item.slot}).");
             return new BeggarResult { outcome = BeggarOutcome.Item, rewardName = item.itemName };
         }
 

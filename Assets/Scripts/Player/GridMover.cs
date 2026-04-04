@@ -75,16 +75,22 @@ public class GridMover : MonoBehaviour
 
         // Handle NPC interactions
         if (tag == RoomTag.Vendor)
-        { 
+        {
             var vendor = NPCSpawner.Instance.GetVendor();
-            if (vendor != null) vendor.OpenShop();
-            return;
+            if (vendor != null && vendor.gameObject.activeInHierarchy && vendor.GridPos == target)
+            {
+                vendor.OpenShop();
+                return;
+            }
         }
         if (tag == RoomTag.Beggar)
         {
             var beggar = NPCSpawner.Instance.GetBeggar();
-            if (beggar != null) beggar.Interact();
-            return;
+            if (beggar != null && beggar.gameObject.activeInHierarchy && beggar.GridPos == target)
+            {
+                beggar.Interact();
+                return;
+            }
         }
 
         EnemyInstance enemy = EnemySpawner.Instance.GetEnemyAt(target);
@@ -103,6 +109,13 @@ public class GridMover : MonoBehaviour
 
         if (DungeonRenderer.Instance.IsStairs(target))
         {
+            bool isBossFloor = FloorManager.Instance.CurrentFloor >= FloorManager.MaxFloors;
+            if (isBossFloor && EnemySpawner.Instance != null && EnemySpawner.Instance.HasAnyActiveEnemy())
+            {
+                HUDController.Instance?.Log("The exit is sealed. Defeat the boss first.");
+                return;
+            }
+
             Debug.Log($"  Stepping on stairs at {target}");
             // Move player to stairs tile first
             gridPos = target;
@@ -115,6 +128,7 @@ public class GridMover : MonoBehaviour
                 // If BuffSelectionUI isn't in the scene yet, generate the next floor directly
                 if (BuffSelectionUI.Instance == null)
                 {
+                    FloorManager.Instance.ApplyStartOfFloorEffects();
                     FindFirstObjectByType<DungeonOrchestrator>().GenerateFloor();
                 }
             }
