@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
-  m_Name: Item_Auto_Head_011
+  m_Name: Item_Auto_Feather_001
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Shiny Head Consonant of Wind #11
-  slot: 0
+  itemName: Silent Feather Consonant of Pulse #13
+  slot: 4
   elementBonus: 0
   icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 13
-  hpBonus: 8
-  defenseBonus: 5
+  buyPrice: 4
+  hpBonus: 1
+  defenseBonus: 0
   AssonantBonus: 0
   DissonantBonus: 0
-  ConsonantBonus: 5
+  ConsonantBonus: 1

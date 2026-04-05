@@ -16,6 +16,7 @@ public class GridMover : MonoBehaviour
     private Coroutine movementTimeoutCoroutine;
 
     public Vector2Int GridPos => gridPos;
+    public float Facing => facing;
 
     public const float CellSize = 4f;
     private const float MOVEMENT_TIMEOUT = 2f; // Auto-reset after 2 seconds
@@ -100,12 +101,6 @@ public class GridMover : MonoBehaviour
             return; 
         }
 
-        ItemPickup item = ItemSpawner.Instance.GetItemAt(target);
-        if (item != null) 
-        { 
-            Debug.Log($"  Collecting item at {target}");
-            item.Collect(); 
-        }
 
         if (DungeonRenderer.Instance.IsStairs(target))
         {

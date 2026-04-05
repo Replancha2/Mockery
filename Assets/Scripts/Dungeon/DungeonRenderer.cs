@@ -33,6 +33,7 @@ public class DungeonRenderer : MonoBehaviour
     public FloorMaterialSet[] floorMaterialSets;
 
     private DungeonData currentData;
+    public DungeonData CurrentData => currentData;
     private List<GameObject> spawnedObjects = new();
     private Material[] activeWallMaterials;
     private Material[] activeFloorMaterials;

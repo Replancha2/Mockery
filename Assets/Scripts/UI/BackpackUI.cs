@@ -11,10 +11,9 @@ public class BackpackUI : MonoBehaviour
     [SerializeField] private GameObject backpackPanel;
     [SerializeField] private Button backpackCloseButton;
     [SerializeField] private Transform backpackListRoot;
-    [SerializeField] private Button backpackItemButtonPrefab;
     [SerializeField] private TextMeshProUGUI backpackEmptyLabel;
 
-    private readonly List<Button> _entryButtons = new List<Button>();
+    private readonly List<BackpackItemEntry> _entries = new List<BackpackItemEntry>();
 
     // -------------------------------------------------------------------------
 
@@ -24,6 +23,13 @@ public class BackpackUI : MonoBehaviour
         Instance = this;
         if (backpackPanel != null)
             backpackPanel.SetActive(false);
+
+        // Ensure ContentSizeFitter is present so the grid content grows and ScrollRect can scroll
+        if (backpackListRoot != null && backpackListRoot.GetComponent<ContentSizeFitter>() == null)
+        {
+            var csf = backpackListRoot.gameObject.AddComponent<ContentSizeFitter>();
+            csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        }
     }
 
     void Start()
@@ -68,14 +74,11 @@ public class BackpackUI : MonoBehaviour
 
     void RebuildList()
     {
-        if (backpackListRoot == null || backpackItemButtonPrefab == null) return;
+        if (backpackListRoot == null) return;
 
-        for (int i = 0; i < _entryButtons.Count; i++)
-        {
-            if (_entryButtons[i] != null)
-                Destroy(_entryButtons[i].gameObject);
-        }
-        _entryButtons.Clear();
+        for (int i = backpackListRoot.childCount - 1; i >= 0; i--)
+            Destroy(backpackListRoot.GetChild(i).gameObject);
+        _entries.Clear();
 
         var backpackItems = PlayerInventory.Instance.BackpackItems;
 
@@ -87,15 +90,14 @@ public class BackpackUI : MonoBehaviour
             ItemData item = backpackItems[i];
             if (item == null) continue;
 
-            Button entry = Instantiate(backpackItemButtonPrefab, backpackListRoot);
-            _entryButtons.Add(entry);
-
-            var label = entry.GetComponentInChildren<TextMeshProUGUI>();
-            if (label != null)
-                label.text = item.itemName;
+            var go = new GameObject($"Item_{i}", typeof(RectTransform), typeof(CanvasRenderer),
+                                    typeof(TextMeshProUGUI), typeof(BackpackItemEntry));
+            go.transform.SetParent(backpackListRoot, false);
 
             int index = i;
-            entry.onClick.AddListener(() => EquipItem(index));
+            var entry = go.GetComponent<BackpackItemEntry>();
+            entry.Init(item.itemName, () => EquipItem(index));
+            _entries.Add(entry);
         }
     }
 

@@ -19,4 +19,6 @@ public class ItemData : ScriptableObject
     public int AssonantBonus;
     public int DissonantBonus;
     public int ConsonantBonus;
+
+    public int TotalStats() => hpBonus + defenseBonus + AssonantBonus + DissonantBonus + ConsonantBonus;
 }

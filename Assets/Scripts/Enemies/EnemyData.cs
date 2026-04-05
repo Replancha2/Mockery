@@ -12,4 +12,8 @@ public class EnemyData : ScriptableObject
     public bool isBoss;
     public Sprite sprite;               // shown on combat screen
     public GameObject elementVFXPrefab; // colored particle in dungeon
+
+    [Header("Loot")]
+    [Range(0f, 1f)] public float itemDropChance;
+    public ItemData[] itemPool;
 }

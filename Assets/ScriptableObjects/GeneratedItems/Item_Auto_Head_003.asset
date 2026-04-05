@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
-  m_Name: Item_Auto_Feather_012
+  m_Name: Item_Auto_Head_003
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Ancient Feather Dissonant of Night #12
-  slot: 4
+  itemName: Broken Head Dissonant of Dust #3
+  slot: 0
   elementBonus: 2
   icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 14
+  buyPrice: 11
   hpBonus: 4
-  defenseBonus: 5
+  defenseBonus: 3
   AssonantBonus: 0
-  DissonantBonus: 5
+  DissonantBonus: 4
   ConsonantBonus: 0

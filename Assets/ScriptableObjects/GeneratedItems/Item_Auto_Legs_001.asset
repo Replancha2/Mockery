@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
-  m_Name: Item_Auto_Feet_006
+  m_Name: Item_Auto_Legs_001
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Ancient Feet Consonant of Sparks #6
-  slot: 3
+  itemName: Shiny Legs Consonant of Night #7
+  slot: 2
   elementBonus: 0
   icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 7
-  hpBonus: 4
-  defenseBonus: 1
+  buyPrice: 3
+  hpBonus: 0
+  defenseBonus: 4
   AssonantBonus: 0
   DissonantBonus: 0
-  ConsonantBonus: 2
+  ConsonantBonus: 0

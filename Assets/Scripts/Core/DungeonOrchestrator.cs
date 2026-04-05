@@ -11,7 +11,6 @@ public class DungeonOrchestrator : MonoBehaviour
             DungeonData data = BSPGenerator.Instance.Generate();
             DungeonRenderer.Instance.Render(data);
             EnemySpawner.Instance.SpawnEnemies(data, FloorManager.Instance.CurrentFloor);
-            ItemSpawner.Instance.SpawnItems(data);
             if (NPCSpawner.Instance != null)
                 NPCSpawner.Instance.SpawnNPCs(data);
             else

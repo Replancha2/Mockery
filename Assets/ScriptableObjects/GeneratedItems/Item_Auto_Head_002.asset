@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
-  m_Name: Item_Auto_Head_001
+  m_Name: Item_Auto_Head_002
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Broken Head Dissonant of Tone #1
+  itemName: Echo Head Dissonant of Rhythm #2
   slot: 0
   elementBonus: 2
   icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 8
-  hpBonus: 1
+  buyPrice: 15
+  hpBonus: 0
   defenseBonus: 2
   AssonantBonus: 0
-  DissonantBonus: 1
+  DissonantBonus: 4
   ConsonantBonus: 0
