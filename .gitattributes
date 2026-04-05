@@ -1,0 +1,23 @@
+# Unity YAML merge
+*.unity merge=unityyamlmerge
+*.prefab merge=unityyamlmerge
+*.asset merge=unityyamlmerge
+*.meta merge=unityyamlmerge
+
+# Binary assets - no merge
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.bmp binary
+*.tga binary
+*.tiff binary
+*.psd binary
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.aif binary
+*.fbx binary
+*.obj binary
+*.dll binary
+*.so binary

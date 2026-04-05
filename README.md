@@ -20,6 +20,15 @@
 
 4. Once the editor finishes importing, open the main scene from the **Project** window and press **Play**.
 
+4. Configure the Unity smart merge driver so Git can resolve scene/prefab conflicts automatically:
+   ```sh
+   git config merge.unityyamlmerge.name "Unity SmartMerge"
+   git config merge.unityyamlmerge.driver "'/home/<your-username>/Unity/Hub/Editor/6000.3.11f1/Editor/Data/Tools/UnityYAMLMerge' merge -p %O %B %A %D"
+   git config merge.unityyamlmerge.recursive binary
+   ```
+   Replace `<your-username>` with your system username. On Windows the path will look like:
+   `'C:/Program Files/Unity/Hub/Editor/6000.3.11f1/Editor/Data/Tools/UnityYAMLMerge.exe'`
+
 ### Notes
 
 - The `Library/`, `Temp/`, and `Logs/` folders are not tracked in git and will be regenerated automatically by Unity.
