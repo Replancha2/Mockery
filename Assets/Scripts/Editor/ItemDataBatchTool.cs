@@ -9,7 +9,7 @@ public class ItemDataBatchTool : EditorWindow
     private const string DefaultFolder = "Assets/ScriptableObjects/GeneratedItems";
 
     private string targetFolder = DefaultFolder;
-    private int generateCount = 12;
+    private int countPerSlot = 3;
     private bool randomizeElementBonus = true;
     private int minPrice = 2;
     private int maxPrice = 15;
@@ -29,7 +29,7 @@ public class ItemDataBatchTool : EditorWindow
     {
         EditorGUILayout.LabelField("Item Generation", EditorStyles.boldLabel);
         targetFolder = EditorGUILayout.TextField("Target Folder", targetFolder);
-        generateCount = EditorGUILayout.IntSlider("Generate Count", generateCount, 1, 100);
+        countPerSlot = EditorGUILayout.IntSlider("Items Per Slot", countPerSlot, 1, 20);
         randomizeElementBonus = EditorGUILayout.Toggle("Random Element Type", randomizeElementBonus);
 
         EditorGUILayout.Space();
@@ -70,19 +70,26 @@ public class ItemDataBatchTool : EditorWindow
     {
         EnsureFolder(targetFolder);
 
-        for (int i = 0; i < generateCount; i++)
-        {
-            ItemData item = CreateInstance<ItemData>();
-            FillRandomItem(item, i);
+        var slots = (EquipmentSlot[])System.Enum.GetValues(typeof(EquipmentSlot));
+        int total = 0;
 
-            string fileName = $"Item_Auto_{item.slot}_{i + 1:000}.asset";
-            string path = AssetDatabase.GenerateUniqueAssetPath($"{targetFolder}/{fileName}");
-            AssetDatabase.CreateAsset(item, path);
+        foreach (var slot in slots)
+        {
+            for (int i = 0; i < countPerSlot; i++)
+            {
+                ItemData item = CreateInstance<ItemData>();
+                FillRandomItem(item, slot, total);
+
+                string fileName = $"Item_Auto_{slot}_{i + 1:000}.asset";
+                string path = AssetDatabase.GenerateUniqueAssetPath($"{targetFolder}/{fileName}");
+                AssetDatabase.CreateAsset(item, path);
+                total++;
+            }
         }
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log($"[ItemDataBatchTool] Generated {generateCount} random ItemData assets in {targetFolder}.");
+        Debug.Log($"[ItemDataBatchTool] Generated {total} ItemData assets ({countPerSlot} per slot) in {targetFolder}.");
     }
 
     private void RandomizeExistingItemsInFolder()
@@ -150,9 +157,11 @@ public class ItemDataBatchTool : EditorWindow
         Debug.Log($"[ItemDataBatchTool] Assigned {allItems.Count} ItemData assets to NPCSpawner.sharedItemPool on {targetSpawner.name}.");
     }
 
-    private void FillRandomItem(ItemData item, int seedIndex)
+    private void FillRandomItem(ItemData item, int seedIndex) =>
+        FillRandomItem(item, (EquipmentSlot)Random.Range(0, System.Enum.GetValues(typeof(EquipmentSlot)).Length), seedIndex);
+
+    private void FillRandomItem(ItemData item, EquipmentSlot slot, int seedIndex)
     {
-        EquipmentSlot slot = (EquipmentSlot)Random.Range(0, System.Enum.GetValues(typeof(EquipmentSlot)).Length);
         SpellType element = (SpellType)Random.Range(0, System.Enum.GetValues(typeof(SpellType)).Length);
 
         item.slot = slot;

@@ -72,8 +72,10 @@ public class BuffSelectionUI : MonoBehaviour
             pool.RemoveAt(idx);
             offered.Add(b);
 
-            buffNameLabels[i].text = b.buffName;
-            buffDescLabels[i].text  = b.description;
+            if (buffNameLabels != null && i < buffNameLabels.Length && buffNameLabels[i] != null)
+                buffNameLabels[i].text = b.buffName;
+            if (buffDescLabels != null && i < buffDescLabels.Length && buffDescLabels[i] != null)
+                buffDescLabels[i].text = b.description;
         }
 
         panel.SetActive(true);

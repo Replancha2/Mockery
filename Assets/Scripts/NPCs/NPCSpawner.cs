@@ -126,7 +126,7 @@ public class NPCSpawner : MonoBehaviour
         ItemData[] validItems = GetValidSharedItems();
         if (validItems.Length == 0)
         {
-            Debug.LogWarning("[NPCSpawner] No valid items found for VendorNPC (sharedItemPool and ItemSpawner pool are empty/null).");
+            Debug.LogWarning("[NPCSpawner] No valid items found for VendorNPC. Assign items to sharedItemPool.");
             return;
         }
 
@@ -142,7 +142,7 @@ public class NPCSpawner : MonoBehaviour
         ItemData[] validItems = GetValidSharedItems();
         if (validItems.Length == 0)
         {
-            Debug.LogWarning("[NPCSpawner] No valid items found for BeggarNPC (sharedItemPool and ItemSpawner pool are empty/null).");
+            Debug.LogWarning("[NPCSpawner] No valid items found for BeggarNPC. Assign items to sharedItemPool.");
             return;
         }
 
@@ -157,14 +157,6 @@ public class NPCSpawner : MonoBehaviour
         if (sharedItemPool != null)
         {
             foreach (var item in sharedItemPool)
-            {
-                if (item != null && !list.Contains(item)) list.Add(item);
-            }
-        }
-
-        if (ItemSpawner.Instance != null && ItemSpawner.Instance.itemPool != null)
-        {
-            foreach (var item in ItemSpawner.Instance.itemPool)
             {
                 if (item != null && !list.Contains(item)) list.Add(item);
             }

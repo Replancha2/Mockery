@@ -162,12 +162,18 @@ public class EnemyInstance : MonoBehaviour
     //     PlayerStats.Instance.TakeDamage(dmg);
     // }
 
-    // public void DropLoot()
-    // {
-    //     int gold = Random.Range(data.goldMin, data.goldMax + 1);
-    //     FloorManager.Instance.AddGold(gold);
+    public void DropLoot()
+    {
+        if (data.itemPool == null || data.itemPool.Length == 0) return;
+        if (Random.value > data.itemDropChance) return;
 
-    //     if (Random.value < data.itemDropChance)
-    //         ItemSpawner.Instance.SpawnRandomItemAt(GridPos);
-    // }
+        ItemData item = data.itemPool[Random.Range(0, data.itemPool.Length)];
+        var result = PlayerInventory.Instance.AcquireItem(item);
+        if (result == PlayerInventory.ItemAcquireResult.StoredInBackpack)
+            HUDController.Instance?.Log($"Backpack: {item.itemName}");
+        else if (result == PlayerInventory.ItemAcquireResult.Swapped)
+            HUDController.Instance?.Log($"Equipped {item.itemName}, replaced previous {item.slot} item.");
+        else
+            HUDController.Instance?.Log($"Equipped {item.itemName} ({item.slot}).");
+    }
 }

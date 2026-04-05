@@ -13,7 +13,6 @@ public class DungeonData
     public Vector2Int  StairsPos;
     public List<Vector2Int> EnemySpawns    = new();
     public List<Vector2Int> MiniBossSpawns = new();
-    public List<Vector2Int> ItemSpawns     = new();
     public Vector2Int VendorPos;
     public Vector2Int BeggarPos;
 

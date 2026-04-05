@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
-  m_Name: Item_Auto_Feet_007
+  m_Name: Item_Auto_Chest_002
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Uncommon Boots
-  slot: 3
-  elementBonus: 1
-  icon: {fileID: 367063105, guid: 83d82971302f9814e83789dd781c79fe, type: 3}
+  itemName: Echo Chest Consonant of Tone #5
+  slot: 1
+  elementBonus: 0
+  icon: {fileID: 1525344730, guid: d35f7fcb77751964a88a2995b8649083, type: 3}
   restoreAmount: 0
-  buyPrice: 5
-  hpBonus: 1
-  defenseBonus: 3
-  AssonantBonus: 1
+  buyPrice: 12
+  hpBonus: 8
+  defenseBonus: 0
+  AssonantBonus: 0
   DissonantBonus: 0
-  ConsonantBonus: 0
+  ConsonantBonus: 1

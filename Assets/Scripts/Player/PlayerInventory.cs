@@ -5,7 +5,7 @@ public class PlayerInventory : MonoBehaviour
 {
     public static PlayerInventory Instance { get; private set; }
 
-    public enum ItemAcquireResult { Equipped, StoredInBackpack }
+    public enum ItemAcquireResult { Equipped, Swapped, StoredInBackpack }
 
     public event System.Action OnInventoryChanged;
 
@@ -40,15 +40,28 @@ public class PlayerInventory : MonoBehaviour
     {
         if (item == null) return ItemAcquireResult.Equipped;
 
-        if (AreAllEquipmentSlotsFilled())
+        // If the slot is empty, equip directly
+        if (!_equipped.TryGetValue(item.slot, out var current) || current == null)
         {
-            _backpack.Add(item);
-            OnInventoryChanged?.Invoke();
-            return ItemAcquireResult.StoredInBackpack;
+            Equip(item);
+            return ItemAcquireResult.Equipped;
         }
 
-        Equip(item);
-        return ItemAcquireResult.Equipped;
+        // If new item is strictly better, equip it and move the old one to backpack
+        if (item.TotalStats() > current.TotalStats())
+        {
+            Unapply(current);
+            _backpack.Add(current);
+            Apply(item);
+            _equipped[item.slot] = item;
+            OnInventoryChanged?.Invoke();
+            return ItemAcquireResult.Swapped;
+        }
+
+        // Otherwise store in backpack
+        _backpack.Add(item);
+        OnInventoryChanged?.Invoke();
+        return ItemAcquireResult.StoredInBackpack;
     }
 
     public bool EquipFromBackpack(int index, out ItemData equippedItem, out ItemData replacedItem)
@@ -82,17 +95,6 @@ public class PlayerInventory : MonoBehaviour
         _equipped.Clear();
         _backpack.Clear();
         OnInventoryChanged?.Invoke();
-    }
-
-    bool AreAllEquipmentSlotsFilled()
-    {
-        foreach (EquipmentSlot slot in System.Enum.GetValues(typeof(EquipmentSlot)))
-        {
-            if (!_equipped.TryGetValue(slot, out var item) || item == null)
-                return false;
-        }
-
-        return true;
     }
 
     // -------------------------------------------------------------------------

@@ -171,6 +171,7 @@ public class CombatManager : MonoBehaviour
                 Debug.Log($"[VICTORY] {currentCombatEnemy.data.enemyName} defeated!");
                 HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} defeated!");
                 HUDController.Instance?.Log($"You found {goldReward} gold.");
+                currentCombatEnemy.DropLoot();
                 EnemySpawner.Instance.RemoveEnemy(currentCombatEnemy);
                 currentCombatEnemy = null;
                 OnCombatEnd?.Invoke();

@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
-  m_Name: Item_Auto_Head_009
+  m_Name: Item_Auto_Legs_002
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Rare Hat
-  slot: 0
-  elementBonus: 1
-  icon: {fileID: 1525344730, guid: d35f7fcb77751964a88a2995b8649083, type: 3}
+  itemName: Worn Legs Consonant of Tone #8
+  slot: 2
+  elementBonus: 0
+  icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 7
-  hpBonus: 4
-  defenseBonus: 4
+  buyPrice: 15
+  hpBonus: 5
+  defenseBonus: 0
   AssonantBonus: 0
   DissonantBonus: 0
-  ConsonantBonus: 0
+  ConsonantBonus: 4

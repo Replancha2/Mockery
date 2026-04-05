@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
-  m_Name: Item_Auto_Legs_010
+  m_Name: Item_Auto_Chest_003
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Legendary Pants
-  slot: 2
+  itemName: Ancient Chest Dissonant of Pulse #6
+  slot: 1
   elementBonus: 2
   icon: {fileID: 2109318949, guid: 47635dc83591d304fb44f9508fcd0af2, type: 3}
   restoreAmount: 0
-  buyPrice: 16
+  buyPrice: 4
   hpBonus: 8
-  defenseBonus: 8
+  defenseBonus: 2
   AssonantBonus: 0
   DissonantBonus: 0
   ConsonantBonus: 0

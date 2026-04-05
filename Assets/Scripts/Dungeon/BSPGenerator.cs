@@ -30,7 +30,6 @@ public class BSPGenerator : MonoBehaviour
 
     [Header("Spawn Counts")]
     public int enemiesPerFloor = 4;
-    public int itemsPerFloor   = 3;
 
     [Header("Boss Floor")]
     [SerializeField] private int bossFloorRoomMargin = 2;
@@ -72,7 +71,6 @@ public class BSPGenerator : MonoBehaviour
         ConnectRooms(data, root);
         TagRooms(data, leaves);
         PlaceEnemies(data, leaves);
-        PlaceItems(data, leaves);
 
         // Debug: Count walkable tiles
         int walkableTiles = 0;
@@ -114,7 +112,6 @@ public class BSPGenerator : MonoBehaviour
         data.EnemySpawns.Clear();
         data.EnemySpawns.Add(bossPos);
 
-        data.ItemSpawns.Clear();
         data.MiniBossSpawns.Clear();
 
         data.VendorPos = Vector2Int.zero;
@@ -331,18 +328,6 @@ public class BSPGenerator : MonoBehaviour
             var pos = new Vector2Int(leaves[i].Room.x + 1, leaves[i].Room.y + 1);
             if (pos != data.StairsPos && pos != data.VendorPos && pos != data.BeggarPos)
                 data.EnemySpawns.Add(pos);
-        }
-    }
-
-    void PlaceItems(DungeonData data, List<BSPNode> leaves)
-    {
-        int limit = Mathf.Max(1, leaves.Count - 3);
-        for (int i = 0; i < itemsPerFloor && i < limit - 1; i++)
-        {
-            var room = leaves[i + 1].Room;
-            var pos  = new Vector2Int(room.x + room.width - 2, room.y + room.height - 2);
-            if (!data.EnemySpawns.Contains(pos) && pos != data.StairsPos)
-                data.ItemSpawns.Add(pos);
         }
     }
 

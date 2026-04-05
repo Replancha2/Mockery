@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
-  m_Name: Item_Auto_Head_011
+  m_Name: Item_Auto_Head_002
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Legendary Hat
-  slot: 0
-  elementBonus: 0
-  icon: {fileID: 1525344730, guid: d35f7fcb77751964a88a2995b8649083, type: 3}
+  itemName: Legendary Pants
+  slot: 2
+  elementBonus: 2
+  icon: {fileID: 2109318949, guid: 47635dc83591d304fb44f9508fcd0af2, type: 3}
   restoreAmount: 0
-  buyPrice: 12
+  buyPrice: 16
   hpBonus: 8
   defenseBonus: 8
-  AssonantBonus: 1
-  DissonantBonus: 1
-  ConsonantBonus: 1
+  AssonantBonus: 0
+  DissonantBonus: 0
+  ConsonantBonus: 0
