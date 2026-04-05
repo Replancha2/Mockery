@@ -111,8 +111,12 @@ public class ShopUI : MonoBehaviour
             else
                 Debug.LogWarning($"ShopUI: itemNameLabels[{i}] is missing.");
 
+            int displayPrice = PlayerStats.Instance != null
+                ? PlayerStats.Instance.GetDiscountedPrice(item.buyPrice)
+                : item.buyPrice;
+
             if (i < itemPriceLabels.Length && itemPriceLabels[i] != null)
-                itemPriceLabels[i].text = $"{item.buyPrice} Gold";
+                itemPriceLabels[i].text = $"{displayPrice} Gold";
             else
                 Debug.LogWarning($"ShopUI: itemPriceLabels[{i}] is missing.");
 
@@ -121,7 +125,7 @@ public class ShopUI : MonoBehaviour
             else
                 Debug.LogWarning($"ShopUI: itemDescLabels[{i}] is missing.");
 
-            itemButtons[i].interactable = FloorManager.Instance != null && FloorManager.Instance.Gold >= item.buyPrice;
+            itemButtons[i].interactable = FloorManager.Instance != null && FloorManager.Instance.Gold >= displayPrice;
         }
     }
 
@@ -149,7 +153,10 @@ public class ShopUI : MonoBehaviour
                 continue;
             }
 
-            itemButtons[i].interactable = FloorManager.Instance.Gold >= stock[i].buyPrice;
+            int price = PlayerStats.Instance != null
+                ? PlayerStats.Instance.GetDiscountedPrice(stock[i].buyPrice)
+                : stock[i].buyPrice;
+            itemButtons[i].interactable = FloorManager.Instance.Gold >= price;
         }
     }
 

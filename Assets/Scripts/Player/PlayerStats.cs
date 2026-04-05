@@ -13,9 +13,11 @@ public class PlayerStats : MonoBehaviour
     public int CurrentHP { get; private set; }
     public int PotionCharges { get; private set; }
 
-    public int DefenseBonus     { get; private set; }
+    public int DefenseBonus          { get; private set; }
     public int FloorHealBonusPercent { get; private set; }
-    public int GoldBonusPerKill { get; private set; }
+    public int GoldBonusPerKill      { get; private set; }
+    public int PotionHealBonusPercent { get; private set; }
+    public int VendorDiscountPercent  { get; private set; }
 
     public bool      HasEarplugs  { get; private set; }
     public SpellType BonusElement { get; private set; } = (SpellType)(-1);
@@ -50,9 +52,11 @@ public class PlayerStats : MonoBehaviour
         CurrentHP = maxHP;
         foreach (var key in new List<SpellType>(spellDamageBonuses.Keys))
             spellDamageBonuses[key] = 0;
-        DefenseBonus     = 0;
+        DefenseBonus          = 0;
         FloorHealBonusPercent = 0;
-        GoldBonusPerKill = 0;
+        GoldBonusPerKill      = 0;
+        PotionHealBonusPercent = 0;
+        VendorDiscountPercent  = 0;
         PotionCharges = startingPotionCharges;
         OnStatsChanged?.Invoke();
     }
@@ -89,16 +93,25 @@ public class PlayerStats : MonoBehaviour
         OnStatsChanged?.Invoke();
     }
 
-    public void AddDefenseBonus(int amount)    { DefenseBonus     += amount; OnStatsChanged?.Invoke(); }
-    public void AddFloorHealBonusPercent(int amount) { FloorHealBonusPercent += amount; OnStatsChanged?.Invoke(); }
-    public void AddGoldBonus(int amount)       { GoldBonusPerKill += amount; OnStatsChanged?.Invoke(); }
+    public void AddDefenseBonus(int amount)          { DefenseBonus           += amount; OnStatsChanged?.Invoke(); }
+    public void AddFloorHealBonusPercent(int amount) { FloorHealBonusPercent  += amount; OnStatsChanged?.Invoke(); }
+    public void AddGoldBonus(int amount)             { GoldBonusPerKill       += amount; OnStatsChanged?.Invoke(); }
+    public void AddPotionHealBonusPercent(int amount){ PotionHealBonusPercent += amount; OnStatsChanged?.Invoke(); }
+    public void AddVendorDiscountPercent(int amount) { VendorDiscountPercent  += amount; OnStatsChanged?.Invoke(); }
+
+    public int GetDiscountedPrice(int basePrice)
+    {
+        if (VendorDiscountPercent <= 0) return basePrice;
+        float multiplier = Mathf.Clamp01(1f - VendorDiscountPercent / 100f);
+        return Mathf.Max(1, Mathf.RoundToInt(basePrice * multiplier));
+    }
 
     public bool TryUsePotion()
     {
         if (PotionCharges <= 0) return false;
         if (CurrentHP >= maxHP) return false;
 
-        int healAmount = Mathf.Max(1, Mathf.CeilToInt(maxHP * 0.25f));
+        int healAmount = Mathf.Max(1, Mathf.CeilToInt(maxHP * (0.25f + PotionHealBonusPercent / 100f)));
         PotionCharges--;
         CurrentHP = Mathf.Min(maxHP, CurrentHP + healAmount);
         OnStatsChanged?.Invoke();

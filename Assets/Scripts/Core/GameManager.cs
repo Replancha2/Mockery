@@ -22,15 +22,26 @@ public class GameManager : MonoBehaviour
         OnStateChanged?.Invoke(newState);
     }
 
+    public void LoadTutorial() => SceneManager.LoadScene("Tutorial");
+
     public void StartNewRun()
     {
         FloorManager.Instance.ResetRun();
         PlayerStats.Instance.ResetForNewRun();
         PlayerInventory.Instance.ResetInventory();
-        SceneManager.LoadScene("Game");
+        SceneManager.LoadScene("GamePlay");
         SetState(GameState.Exploring);
     }
 
-    public void GameOver()  => SceneManager.LoadScene("GameOver");
-    public void Victory()   => SceneManager.LoadScene("Victory");
+    public void GameOver()
+    {
+        SetState(GameState.GameOver);
+        SceneManager.LoadScene("GameOver");
+    }
+
+    public void Victory()
+    {
+        SetState(GameState.Victory);
+        SceneManager.LoadScene("GameOver");
+    }
 }

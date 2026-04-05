@@ -67,7 +67,10 @@ public class VendorNPC : MonoBehaviour
     // Called by ShopUI when a purchase is made
     public void BuyItem(ItemData item)
     {
-        if (!FloorManager.Instance.SpendGold(item.buyPrice)) return;
+        int price = PlayerStats.Instance != null
+            ? PlayerStats.Instance.GetDiscountedPrice(item.buyPrice)
+            : item.buyPrice;
+        if (!FloorManager.Instance.SpendGold(price)) return;
         CurrentStock.Remove(item);
         var result = PlayerInventory.Instance.AcquireItem(item);
         if (result == PlayerInventory.ItemAcquireResult.StoredInBackpack)

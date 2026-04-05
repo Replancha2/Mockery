@@ -38,13 +38,8 @@ public class HUDController : MonoBehaviour
     [Header("Potion")]
     [SerializeField] private Button potionButton;
 
-    [Header("Backpack UI")]
+    [Header("Backpack")]
     [SerializeField] private Button backpackButton;
-    [SerializeField] private GameObject backpackPanel;
-    [SerializeField] private Button backpackCloseButton;
-    [SerializeField] private Transform backpackListRoot;
-    [SerializeField] private Button backpackItemButtonPrefab;
-    [SerializeField] private TextMeshProUGUI backpackEmptyLabel;
 
     [Header("Console Log")]
     public TextMeshProUGUI consoleText;
@@ -56,8 +51,6 @@ public class HUDController : MonoBehaviour
     private Coroutine _damageImpactRoutine;
     private RectTransform _portraitRect;
     private Vector2 _portraitBaseAnchoredPos;
-    private readonly List<Button> _backpackEntryButtons = new List<Button>();
-
     // -------------------------------------------------------------------------
 
     void Awake()
@@ -83,11 +76,7 @@ public class HUDController : MonoBehaviour
             potionButton.onClick.AddListener(OnPotionPressed);
 
         if (backpackButton != null)
-            backpackButton.onClick.AddListener(ToggleBackpackPanel);
-        if (backpackCloseButton != null)
-            backpackCloseButton.onClick.AddListener(CloseBackpackPanel);
-        if (backpackPanel != null)
-            backpackPanel.SetActive(false);
+            backpackButton.onClick.AddListener(() => BackpackUI.Instance.Toggle());
 
         _lastKnownHP = PlayerStats.Instance.CurrentHP;
         SetDamageImpactAlpha(0f);
@@ -105,9 +94,7 @@ public class HUDController : MonoBehaviour
             _portraitRect.anchoredPosition = _portraitBaseAnchoredPos;
 
         if (backpackButton != null)
-            backpackButton.onClick.RemoveListener(ToggleBackpackPanel);
-        if (backpackCloseButton != null)
-            backpackCloseButton.onClick.RemoveListener(CloseBackpackPanel);
+            backpackButton.onClick.RemoveAllListeners();
         if (potionButton != null)
             potionButton.onClick.RemoveListener(OnPotionPressed);
 
@@ -260,81 +247,6 @@ public class HUDController : MonoBehaviour
             inventorySlots[i].enabled = equipped != null;
         }
 
-        RefreshBackpackUI();
-    }
-
-    void ToggleBackpackPanel()
-    {
-        if (backpackPanel == null) return;
-
-        bool willOpen = !backpackPanel.activeSelf;
-        backpackPanel.SetActive(willOpen);
-        if (willOpen)
-            RebuildBackpackList();
-    }
-
-    void CloseBackpackPanel()
-    {
-        if (backpackPanel == null) return;
-        backpackPanel.SetActive(false);
-    }
-
-    void RefreshBackpackUI()
-    {
-        int backpackCount = PlayerInventory.Instance.BackpackItems.Count;
-
-        if (backpackButton != null)
-            backpackButton.interactable = true;
-
-        if (backpackPanel != null && backpackPanel.activeSelf)
-            RebuildBackpackList();
-    }
-
-    void RebuildBackpackList()
-    {
-        if (backpackListRoot == null || backpackItemButtonPrefab == null) return;
-
-        for (int i = 0; i < _backpackEntryButtons.Count; i++)
-        {
-            if (_backpackEntryButtons[i] != null)
-                Destroy(_backpackEntryButtons[i].gameObject);
-        }
-        _backpackEntryButtons.Clear();
-
-        var backpackItems = PlayerInventory.Instance.BackpackItems;
-
-        if (backpackEmptyLabel != null)
-            backpackEmptyLabel.gameObject.SetActive(backpackItems.Count == 0);
-
-        for (int i = 0; i < backpackItems.Count; i++)
-        {
-            ItemData item = backpackItems[i];
-            if (item == null) continue;
-
-            Button entry = Instantiate(backpackItemButtonPrefab, backpackListRoot);
-            _backpackEntryButtons.Add(entry);
-
-            var label = entry.GetComponentInChildren<TextMeshProUGUI>();
-            if (label != null)
-                label.text = item.itemName;
-
-            int index = i;
-            entry.onClick.AddListener(() => EquipBackpackItem(index));
-        }
-    }
-
-    void EquipBackpackItem(int index)
-    {
-        if (!PlayerInventory.Instance.EquipFromBackpack(index, out var equippedItem, out var replacedItem))
-            return;
-
-        if (equippedItem != null)
-        {
-            if (replacedItem != null)
-                Log($"Equipped {equippedItem.itemName} ({equippedItem.slot}). Stored {replacedItem.itemName} in backpack.");
-            else
-                Log($"Equipped {equippedItem.itemName} ({equippedItem.slot}).");
-        }
     }
 
     // -------------------------------------------------------------------------

@@ -7,6 +7,8 @@ public enum BuffEffectType
     DefenseBonus,        // flat damage reduction on all incoming hits
     HealOnCombatStart,   // legacy name: now +value% healing when reaching a new floor
     GoldBonus,           // +value gold per enemy kill
+    PotionHealBonus,     // +value% to potion heal amount (stacks additively with base 25%)
+    VendorDiscount,      // -value% to all vendor buy prices
 }
 
 [CreateAssetMenu(menuName = "Mockery/BuffData")]
@@ -37,6 +39,12 @@ public class BuffData : ScriptableObject
                 break;
             case BuffEffectType.GoldBonus:
                 PlayerStats.Instance.AddGoldBonus(value);
+                break;
+            case BuffEffectType.PotionHealBonus:
+                PlayerStats.Instance.AddPotionHealBonusPercent(value);
+                break;
+            case BuffEffectType.VendorDiscount:
+                PlayerStats.Instance.AddVendorDiscountPercent(value);
                 break;
         }
     }
