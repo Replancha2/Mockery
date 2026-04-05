@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Legs_003
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Brave Legs Consonant of Night #3
+  itemName: Common Pants
   slot: 2
   elementBonus: 0
-  icon: {fileID: 0}
+  icon: {fileID: 2109318949, guid: 47635dc83591d304fb44f9508fcd0af2, type: 3}
   restoreAmount: 0
-  buyPrice: 7
-  hpBonus: 6
-  defenseBonus: 3
+  buyPrice: 1
+  hpBonus: 1
+  defenseBonus: 1
   AssonantBonus: 0
   DissonantBonus: 0
   ConsonantBonus: 0

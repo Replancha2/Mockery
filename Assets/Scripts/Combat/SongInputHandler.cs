@@ -36,6 +36,8 @@ public class SongInputHandler : MonoBehaviour
     private bool   isActive;
 
     public event System.Action<int> OnKeyCorrect; // passes new index
+    public event System.Action<SpellType> OnInputStarted;
+    public event System.Action<bool> OnInputEnded; // true = success, false = fail/cancel
     public event System.Action      OnSuccess;
     public event System.Action      OnFail;
 
@@ -45,9 +47,15 @@ public class SongInputHandler : MonoBehaviour
         CurrentIndex  = 0;
         TimeRemaining = FloorManager.Instance.GetInputTimeLimit();
         isActive      = true;
+        OnInputStarted?.Invoke(song);
     }
 
-    public void StopInput() => isActive = false;
+    public void StopInput()
+    {
+        if (!isActive) return;
+        isActive = false;
+        OnInputEnded?.Invoke(false);
+    }
 
     void Update()
     {
@@ -74,8 +82,21 @@ public class SongInputHandler : MonoBehaviour
         }
     }
 
-    void Success() { isActive = false; Debug.Log($"[SPELL SEQUENCE] SUCCESS! {ActiveSong} sequence completed perfectly!"); OnSuccess?.Invoke(); }
-    void Fail()    { isActive = false; Debug.LogError($"[SPELL SEQUENCE] FAILED! {ActiveSong} sequence was interrupted or timed out!"); OnFail?.Invoke(); }
+    void Success()
+    {
+        isActive = false;
+        Debug.Log($"[SPELL SEQUENCE] SUCCESS! {ActiveSong} sequence completed perfectly!");
+        OnSuccess?.Invoke();
+        OnInputEnded?.Invoke(true);
+    }
+
+    void Fail()
+    {
+        isActive = false;
+        Debug.LogError($"[SPELL SEQUENCE] FAILED! {ActiveSong} sequence was interrupted or timed out!");
+        OnFail?.Invoke();
+        OnInputEnded?.Invoke(false);
+    }
 
     Dir? GetPressedDir()
     {

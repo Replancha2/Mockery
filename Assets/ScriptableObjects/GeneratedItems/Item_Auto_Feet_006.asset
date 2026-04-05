@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Feet_006
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Ancient Feet Consonant of Sparks #6
+  itemName: Common Boots
   slot: 3
   elementBonus: 0
-  icon: {fileID: 0}
+  icon: {fileID: 367063105, guid: 83d82971302f9814e83789dd781c79fe, type: 3}
   restoreAmount: 0
-  buyPrice: 7
-  hpBonus: 4
+  buyPrice: 3
+  hpBonus: 1
   defenseBonus: 1
   AssonantBonus: 0
   DissonantBonus: 0
-  ConsonantBonus: 2
+  ConsonantBonus: 0

@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Legs_005
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Worn Legs Dissonant of Rhythm #5
+  itemName: Uncommon Pants
   slot: 2
   elementBonus: 2
-  icon: {fileID: 0}
+  icon: {fileID: 2109318949, guid: 47635dc83591d304fb44f9508fcd0af2, type: 3}
   restoreAmount: 0
-  buyPrice: 3
-  hpBonus: 8
+  buyPrice: 4
+  hpBonus: 3
   defenseBonus: 2
   AssonantBonus: 0
-  DissonantBonus: 4
+  DissonantBonus: 0
   ConsonantBonus: 0

@@ -78,6 +78,12 @@ public class CombatManager : MonoBehaviour
             currentCombatEnemy = nextTarget;
             enemyAttackCooldown = AttackCooldownDuration;
 
+            if (CombatUIController.Instance != null)
+            {
+                if (currentCombatEnemy != null) CombatUIController.Instance.SetTargetEnemy(currentCombatEnemy);
+                else CombatUIController.Instance.ClearTargetEnemy();
+            }
+
             if (currentCombatEnemy != null)
             {
                 Debug.Log($"[COMBAT START] Engaged with {currentCombatEnemy.data.enemyName} (Resist: {currentCombatEnemy.Resistance})");
@@ -130,6 +136,7 @@ public class CombatManager : MonoBehaviour
         };
 
         Debug.Log($"[SPELL HIT] {selectedSpell} vs {currentCombatEnemy.Resistance} resistance: {resultText} (+{damage} dmg)");
+        CombatUIController.Instance?.ShowSpellResult(resultText, damage);
 
         if (hitResult != SpellHitResult.Immune)
         {
@@ -183,6 +190,7 @@ public class CombatManager : MonoBehaviour
     {
         Debug.LogWarning($"[SPELL FAIL] Wrong sequence for {selectedSpell}!");
         HUDController.Instance?.Log($"Wrong sequence for {selectedSpell}!");
+        CombatUIController.Instance?.ShowSpellMiss();
         enemyAttackCooldown = 0f;
     }
 
@@ -198,6 +206,7 @@ public class CombatManager : MonoBehaviour
         bool dead = PlayerStats.Instance.TakeDamage(dmg);
         Debug.Log($"[ENEMY ATTACK] {currentCombatEnemy.data.enemyName} attacks! -{dmg} HP (Player HP: {PlayerStats.Instance.CurrentHP})");
         HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} hits you for {dmg} damage.");
+        CombatUIController.Instance?.ShowPlayerHit(dmg);
 
         if (dead)
         {
