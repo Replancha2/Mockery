@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 929be42ded63bd0f38e5cbab2306244e, type: 3}
+  m_Name: Enemy_Demon
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyName: Demon
+  element: 0
+  secondPhaseElement: 0
+  maxHP: 20
+  attackDamage: 5
+  isBoss: 0
+  sprite: {fileID: 0}
+  elementVFXPrefab: {fileID: 0}
+  ambientClips:
+  - {fileID: 8300000, guid: 21ac50460c6ba5946a086830f2e61795, type: 3}
+  - {fileID: 8300000, guid: e6dfebe4916e2b5418a18c7398caf869, type: 3}
+  - {fileID: 8300000, guid: 97722ed32ed2b094db16901c2abc9e36, type: 3}
+  attackClip: {fileID: 0}
+  deathClip: {fileID: 8300000, guid: 1ce29b1016d28284fb4d4366aff0f22b, type: 3}
+  elementShiftClip: {fileID: 0}

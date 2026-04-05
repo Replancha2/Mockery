@@ -6,14 +6,21 @@ public class EnemyAI : MonoBehaviour
     private EnemyInstance enemyInstance;
     private float moveTimer;
     private const float MoveInterval = 1.5f; // seconds between moves
-    private const int SightRange = 3;        // max distance to see player
+    private const int SightRange = 5;        // max distance to see player
+    private const int SearchMovesAfterLosingSight = 4;
+    private const int SearchRadiusAroundLastKnown = 2;
     private bool playerInSight;
+    private bool hasLastKnownPlayerPos;
+    private Vector2Int lastKnownPlayerPos;
+    private int searchMovesRemaining;
 
     void Start()
     {
         enemyInstance = GetComponent<EnemyInstance>();
         moveTimer = Random.Range(0f, MoveInterval);
         playerInSight = false;
+        hasLastKnownPlayerPos = false;
+        searchMovesRemaining = 0;
     }
 
     void Update()
@@ -27,6 +34,8 @@ public class EnemyAI : MonoBehaviour
             
             if (playerInSight)
                 ChasePlayer();
+            else if (hasLastKnownPlayerPos)
+                SearchForPlayer();
             else
                 MoveRandomly();
 
@@ -42,6 +51,15 @@ public class EnemyAI : MonoBehaviour
             return;
         }
 
+        if (ShouldAlwaysTrackPlayer())
+        {
+            playerInSight = true;
+            lastKnownPlayerPos = GridMover.Instance.GridPos;
+            hasLastKnownPlayerPos = true;
+            searchMovesRemaining = SearchMovesAfterLosingSight;
+            return;
+        }
+
         Vector2Int playerPos = GridMover.Instance.GridPos;
         Vector2Int enemyPos = enemyInstance.GridPos;
         int distance = Mathf.Abs(playerPos.x - enemyPos.x) + Mathf.Abs(playerPos.y - enemyPos.y); // Manhattan distance
@@ -50,6 +68,9 @@ public class EnemyAI : MonoBehaviour
         if (distance <= SightRange && HasLineOfSight(enemyPos, playerPos))
         {
             playerInSight = true;
+            lastKnownPlayerPos = playerPos;
+            hasLastKnownPlayerPos = true;
+            searchMovesRemaining = SearchMovesAfterLosingSight;
         }
         else
         {
@@ -111,10 +132,36 @@ public class EnemyAI : MonoBehaviour
     void ChasePlayer()
     {
         Vector2Int playerPos = GridMover.Instance.GridPos;
+        MoveToward(playerPos);
+    }
+
+    void SearchForPlayer()
+    {
+        if (searchMovesRemaining <= 0)
+        {
+            hasLastKnownPlayerPos = false;
+            return;
+        }
+
+        Vector2Int enemyPos = enemyInstance.GridPos;
+        if (enemyPos == lastKnownPlayerPos)
+        {
+            Vector2Int probeTarget = GetRandomSearchTile(lastKnownPlayerPos);
+            MoveToward(probeTarget);
+            searchMovesRemaining--;
+            return;
+        }
+
+        MoveToward(lastKnownPlayerPos);
+        searchMovesRemaining--;
+    }
+
+    void MoveToward(Vector2Int targetPos)
+    {
         Vector2Int enemyPos = enemyInstance.GridPos;
         
         // If already adjacent to player, stop moving and let combat handle attacks
-        int distance = Mathf.Abs(playerPos.x - enemyPos.x) + Mathf.Abs(playerPos.y - enemyPos.y);
+        int distance = Mathf.Abs(targetPos.x - enemyPos.x) + Mathf.Abs(targetPos.y - enemyPos.y);
         if (distance <= 1)
         {
             // Adjacent: stand still and combat system handles attacks
@@ -124,13 +171,13 @@ public class EnemyAI : MonoBehaviour
         Vector2Int direction = Vector2Int.zero;
 
         // Move toward player (prioritize closer axis)
-        if (Mathf.Abs(playerPos.x - enemyPos.x) > Mathf.Abs(playerPos.y - enemyPos.y))
+        if (Mathf.Abs(targetPos.x - enemyPos.x) > Mathf.Abs(targetPos.y - enemyPos.y))
         {
-            direction = playerPos.x > enemyPos.x ? Vector2Int.right : Vector2Int.left;
+            direction = targetPos.x > enemyPos.x ? Vector2Int.right : Vector2Int.left;
         }
         else
         {
-            direction = playerPos.y > enemyPos.y ? Vector2Int.up : Vector2Int.down;
+            direction = targetPos.y > enemyPos.y ? Vector2Int.up : Vector2Int.down;
         }
 
         Vector2Int newPos = enemyPos + direction;
@@ -138,7 +185,53 @@ public class EnemyAI : MonoBehaviour
         if (DungeonRenderer.Instance.IsWalkable(newPos) && EnemySpawner.Instance.GetEnemyAt(newPos) == null)
         {
             enemyInstance.SetGridPos(newPos);
+            return;
         }
+
+        // If direct step is blocked, try any step that gets closer.
+        TryAlternateCloserStep(targetPos, enemyPos, distance);
+    }
+
+    void TryAlternateCloserStep(Vector2Int targetPos, Vector2Int enemyPos, int currentDistance)
+    {
+        Vector2Int[] directions = { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right };
+        for (int i = 0; i < directions.Length; i++)
+        {
+            Vector2Int candidate = enemyPos + directions[i];
+            if (!DungeonRenderer.Instance.IsWalkable(candidate)) continue;
+            if (EnemySpawner.Instance.GetEnemyAt(candidate) != null) continue;
+
+            int nextDistance = Mathf.Abs(targetPos.x - candidate.x) + Mathf.Abs(targetPos.y - candidate.y);
+            if (nextDistance < currentDistance)
+            {
+                enemyInstance.SetGridPos(candidate);
+                return;
+            }
+        }
+    }
+
+    Vector2Int GetRandomSearchTile(Vector2Int center)
+    {
+        for (int attempts = 0; attempts < 8; attempts++)
+        {
+            int dx = Random.Range(-SearchRadiusAroundLastKnown, SearchRadiusAroundLastKnown + 1);
+            int dy = Random.Range(-SearchRadiusAroundLastKnown, SearchRadiusAroundLastKnown + 1);
+            Vector2Int candidate = new Vector2Int(center.x + dx, center.y + dy);
+
+            if (!DungeonRenderer.Instance.IsWalkable(candidate)) continue;
+            if (EnemySpawner.Instance.GetEnemyAt(candidate) != null) continue;
+            return candidate;
+        }
+
+        return center;
+    }
+
+    bool ShouldAlwaysTrackPlayer()
+    {
+        if (enemyInstance == null || enemyInstance.data == null) return false;
+        if (!enemyInstance.data.isBoss) return false;
+        if (FloorManager.Instance == null) return false;
+        return FloorManager.Instance.CurrentFloor >= FloorManager.MaxFloors;
     }
 
     void MoveRandomly()

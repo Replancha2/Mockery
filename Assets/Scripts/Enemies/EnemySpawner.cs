@@ -23,6 +23,15 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private ResistanceSpriteSet assonantResistantSprites;
     [SerializeField] private ResistanceSpriteSet dissonantResistantSprites;
 
+    [Header("Boss Sprites")]
+    [SerializeField] private ResistanceSpriteSet bossSprites;
+
+    [Header("Boss Resistance Tint")]
+    [SerializeField] private bool bossUsesResistanceTint = true;
+    [SerializeField] private Color consonantBossTint = new Color(0.65f, 0.80f, 1.00f, 1f);
+    [SerializeField] private Color assonantBossTint = new Color(1.00f, 0.70f, 0.78f, 1f);
+    [SerializeField] private Color dissonantBossTint = new Color(0.75f, 1.00f, 0.72f, 1f);
+
     [Header("Sprite Size Normalization")]
     [SerializeField] private bool normalizeSpriteSize = true;
     [SerializeField] private float targetSpriteWorldHeight = 2.0f;
@@ -76,7 +85,13 @@ public class EnemySpawner : MonoBehaviour
     void ApplyEnemySprite(EnemyInstance enemy, SpriteRenderer sr)
     {
         if (enemy == null || sr == null) return;
-        sr.sprite = GetSpriteForEnemy(enemy, enemy.CurrentVisualState) ?? placeholderSprite;
+        Sprite resolved = GetSpriteForEnemy(enemy, enemy.CurrentVisualState);
+        if (resolved != null)
+            sr.sprite = resolved;
+        else if (sr.sprite == null && placeholderSprite != null)
+            sr.sprite = placeholderSprite;
+
+        sr.color = GetTintForEnemy(enemy);
         ApplySpriteScale(enemy, sr);
     }
 
@@ -104,9 +119,21 @@ public class EnemySpawner : MonoBehaviour
     {
         if (enemy == null) return placeholderSprite;
 
-        // Boss keeps its own single sprite.
+        // Boss can use a dedicated state-based sprite set.
         if (enemy.data != null && enemy.data.isBoss)
+        {
+            Sprite bossStateSprite = state switch
+            {
+                EnemyVisualState.Move => bossSprites != null ? bossSprites.move : null,
+                EnemyVisualState.Attack => bossSprites != null ? bossSprites.attack : null,
+                _ => bossSprites != null ? bossSprites.idle : null,
+            };
+
+            if (bossStateSprite != null) return bossStateSprite;
+
+            // Fallback for old data setups.
             return enemy.data.sprite != null ? enemy.data.sprite : placeholderSprite;
+        }
 
         ResistanceSpriteSet set = GetResistanceSet(enemy.Resistance);
         if (set == null) return placeholderSprite;
@@ -120,6 +147,28 @@ public class EnemySpawner : MonoBehaviour
 
         // Fallback chain so missing state sprites still render.
         return stateSprite != null ? stateSprite : (set.idle != null ? set.idle : placeholderSprite);
+    }
+
+    Color GetTintForEnemy(EnemyInstance enemy)
+    {
+        if (enemy == null || enemy.data == null) return Color.white;
+
+        if (!enemy.data.isBoss || !bossUsesResistanceTint)
+            return Color.white;
+
+        Color tint = enemy.Resistance switch
+        {
+            SpellType.Consonant => consonantBossTint,
+            SpellType.Assonant => assonantBossTint,
+            SpellType.Dissonant => dissonantBossTint,
+            _ => Color.white,
+        };
+
+        // Safety net: avoid fully transparent tint values from hiding the sprite.
+        if (tint.a <= 0.01f)
+            tint.a = 1f;
+
+        return tint;
     }
 
     ResistanceSpriteSet GetResistanceSet(SpellType resistance) => resistance switch

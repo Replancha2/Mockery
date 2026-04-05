@@ -6,6 +6,9 @@ public class FloorManager : MonoBehaviour
     public static FloorManager Instance { get; private set; }
 
     public event System.Action<int> OnGoldChanged;
+    public event System.Action<int> OnGoldAdded;
+    public event System.Action<int> OnGoldSpent;
+    public event System.Action<int> OnFloorChanged;
 
     public int CurrentFloor { get; private set; } = 1;
     public int Gold         { get; private set; } = 0;
@@ -18,7 +21,7 @@ public class FloorManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
@@ -29,12 +32,15 @@ public class FloorManager : MonoBehaviour
         Gold         = 0;
         ActiveBuffs.Clear();
         OnGoldChanged?.Invoke(Gold);
+        OnFloorChanged?.Invoke(CurrentFloor);
     }
 
     public void AddGold(int amount)
     {
         Gold += amount;
         OnGoldChanged?.Invoke(Gold);
+        if (amount > 0)
+            OnGoldAdded?.Invoke(amount);
     }
 
     public bool SpendGold(int amount)
@@ -42,6 +48,8 @@ public class FloorManager : MonoBehaviour
         if (Gold < amount) return false;
         Gold -= amount;
         OnGoldChanged?.Invoke(Gold);
+        if (amount > 0)
+            OnGoldSpent?.Invoke(amount);
         return true;
     }
 
@@ -61,9 +69,22 @@ public class FloorManager : MonoBehaviour
         }
         else
         {
+            OnFloorChanged?.Invoke(CurrentFloor);
             HUDController.Instance?.Log($"You descend to floor {CurrentFloor}.");
             GameManager.Instance.SetState(GameState.BuffSelection);
         }
+    }
+
+    public void DebugSetFloor(int floor)
+    {
+        CurrentFloor = Mathf.Clamp(floor, 1, MaxFloors);
+        OnFloorChanged?.Invoke(CurrentFloor);
+        HUDController.Instance?.Log($"[DEBUG] Floor set to {CurrentFloor}.");
+    }
+
+    public void DebugWarpToBossFloor()
+    {
+        DebugSetFloor(MaxFloors);
     }
 
     public void ApplyStartOfFloorEffects()

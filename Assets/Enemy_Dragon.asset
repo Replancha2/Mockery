@@ -13,19 +13,15 @@ MonoBehaviour:
   m_Name: Enemy_Dragon
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyName: The Dragon
-  sprite: {fileID: 0}
-  vfxPrefab: {fileID: 0}
-  maxHP: 120
-  attackDamage: 15
+  element: 0
+  secondPhaseElement: 0
+  maxHP: 200
+  attackDamage: 20
   isBoss: 1
-  isMini: 0
-  healWeight: 0
-  dotWeight: 0.3
-  powerStrikeWeight: 0.7
-  healPercent: 0.2
-  dotDamagePerTurn: 0
-  dotDuration: 3
-  powerStrikeMultiplier: 1
-  goldMin: 0
-  goldMax: 0
-  itemDropChance: 0
+  sprite: {fileID: 0}
+  elementVFXPrefab: {fileID: 0}
+  ambientClips:
+  - {fileID: 8300000, guid: 4d9c0551f2adbc140b2029102a606716, type: 3}
+  attackClip: {fileID: 0}
+  deathClip: {fileID: 0}
+  elementShiftClip: {fileID: 8300000, guid: 0822d9552c6137b459b24eab526eb2a0, type: 3}

@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
         DOTween.Init();
@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
         OnStateChanged?.Invoke(newState);
     }
 
-    public void LoadTutorial() => SceneManager.LoadScene("Tutorial");
+    public void LoadTutorial() => StartNewRun();
 
     public void StartNewRun()
     {

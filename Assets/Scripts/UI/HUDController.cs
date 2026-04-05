@@ -51,6 +51,10 @@ public class HUDController : MonoBehaviour
     private Coroutine _damageImpactRoutine;
     private RectTransform _portraitRect;
     private Vector2 _portraitBaseAnchoredPos;
+    private PlayerStats _boundPlayerStats;
+    private GameManager _boundGameManager;
+    private PlayerInventory _boundInventory;
+    private FloorManager _boundFloorManager;
     // -------------------------------------------------------------------------
 
     void Awake()
@@ -61,10 +65,7 @@ public class HUDController : MonoBehaviour
 
     void Start()
     {
-        PlayerStats.Instance.OnStatsChanged += Refresh;
-        GameManager.Instance.OnStateChanged += OnStateChanged;
-        PlayerInventory.Instance.OnInventoryChanged += RefreshInventory;
-        if (FloorManager.Instance != null) FloorManager.Instance.OnGoldChanged += OnGoldChanged;
+        TryBindRuntimeManagers();
 
         if (portraitImage != null)
         {
@@ -78,18 +79,25 @@ public class HUDController : MonoBehaviour
         if (backpackButton != null)
             backpackButton.onClick.AddListener(() => BackpackUI.Instance.Toggle());
 
-        _lastKnownHP = PlayerStats.Instance.CurrentHP;
+        _lastKnownHP = _boundPlayerStats != null ? _boundPlayerStats.CurrentHP : 0;
         SetDamageImpactAlpha(0f);
         Refresh();
+        if (_boundGameManager != null)
+            OnStateChanged(_boundGameManager.CurrentState);
         RefreshInventory();
+    }
+
+    void Update()
+    {
+        TryBindRuntimeManagers();
     }
 
     void OnDestroy()
     {
-        if (PlayerStats.Instance) PlayerStats.Instance.OnStatsChanged -= Refresh;
-        if (GameManager.Instance) GameManager.Instance.OnStateChanged -= OnStateChanged;
-        if (PlayerInventory.Instance) PlayerInventory.Instance.OnInventoryChanged -= RefreshInventory;
-        if (FloorManager.Instance) FloorManager.Instance.OnGoldChanged -= OnGoldChanged;
+        if (_boundPlayerStats != null) _boundPlayerStats.OnStatsChanged -= Refresh;
+        if (_boundGameManager != null) _boundGameManager.OnStateChanged -= OnStateChanged;
+        if (_boundInventory != null) _boundInventory.OnInventoryChanged -= RefreshInventory;
+        if (_boundFloorManager != null) _boundFloorManager.OnGoldChanged -= OnGoldChanged;
         if (_portraitRect != null)
             _portraitRect.anchoredPosition = _portraitBaseAnchoredPos;
 
@@ -105,24 +113,33 @@ public class HUDController : MonoBehaviour
 
     void OnStateChanged(GameState state)
     {
-        floorLabel.text = $"Floor {FloorManager.Instance.CurrentFloor} / {FloorManager.MaxFloors}";
-        goldLabel.text  = $"{FloorManager.Instance.Gold}";
+        FloorManager floor = _boundFloorManager != null ? _boundFloorManager : FloorManager.Instance;
+        if (floor == null) return;
+
+        if (floorLabel != null)
+            floorLabel.text = $"Floor {floor.CurrentFloor} / {FloorManager.MaxFloors}";
+        if (goldLabel != null)
+            goldLabel.text  = $"{floor.Gold}";
     }
 
     void Refresh()
     {
-        int currentHP = PlayerStats.Instance.CurrentHP;
+        PlayerStats stats = _boundPlayerStats != null ? _boundPlayerStats : PlayerStats.Instance;
+        FloorManager floor = _boundFloorManager != null ? _boundFloorManager : FloorManager.Instance;
+        if (stats == null || floor == null) return;
+
+        int currentHP = stats.CurrentHP;
         if (currentHP < _lastKnownHP)
         {
             TriggerPortraitShake();
             TriggerDamageImpact();
         }
 
-        hpBar.maxValue = PlayerStats.Instance.maxHP;
+        hpBar.maxValue = stats.maxHP;
         hpBar.value    = currentHP;
-        goldLabel.text = $"{FloorManager.Instance.Gold}";
+        goldLabel.text = $"{floor.Gold}";
         if (potionCountLabel != null)
-            potionCountLabel.text = $"x{PlayerStats.Instance.PotionCharges}";
+            potionCountLabel.text = $"x{stats.PotionCharges}";
         if (potionButton != null)
             potionButton.interactable = true;
         RefreshPortrait();
@@ -131,12 +148,15 @@ public class HUDController : MonoBehaviour
 
     void OnPotionPressed()
     {
-        if (PlayerStats.Instance.TryUsePotion())
+        PlayerStats stats = _boundPlayerStats != null ? _boundPlayerStats : PlayerStats.Instance;
+        if (stats == null) return;
+
+        if (stats.TryUsePotion())
         {
-            int healAmount = Mathf.Max(1, Mathf.CeilToInt(PlayerStats.Instance.maxHP * 0.25f));
+            int healAmount = Mathf.Max(1, Mathf.CeilToInt(stats.maxHP * 0.25f));
             Log($"You drink a potion and recover {healAmount} HP.");
         }
-        else if (PlayerStats.Instance.PotionCharges <= 0)
+        else if (stats.PotionCharges <= 0)
         {
             Log("No potions left.");
         }
@@ -156,7 +176,10 @@ public class HUDController : MonoBehaviour
     {
         if (portraitImage == null || portraitSprites == null || portraitSprites.Length < 4) return;
 
-        float ratio = (float)PlayerStats.Instance.CurrentHP / PlayerStats.Instance.maxHP;
+        PlayerStats stats = _boundPlayerStats != null ? _boundPlayerStats : PlayerStats.Instance;
+        if (stats == null || stats.maxHP <= 0) return;
+
+        float ratio = (float)stats.CurrentHP / stats.maxHP;
 
         // 0: >75%  1: >50%  2: >25%  3: <=25%
         int index;
@@ -234,6 +257,8 @@ public class HUDController : MonoBehaviour
 
     void RefreshInventory()
     {
+        PlayerInventory inventory = _boundInventory != null ? _boundInventory : PlayerInventory.Instance;
+        if (inventory == null) return;
         if (inventorySlots == null) return;
 
         EquipmentSlot[] order = { EquipmentSlot.Head, EquipmentSlot.Chest, EquipmentSlot.Legs, EquipmentSlot.Feet, EquipmentSlot.Feather };
@@ -242,7 +267,7 @@ public class HUDController : MonoBehaviour
         {
             if (inventorySlots[i] == null) continue;
 
-            ItemData equipped = PlayerInventory.Instance.GetEquipped(order[i]);
+            ItemData equipped = inventory.GetEquipped(order[i]);
             inventorySlots[i].sprite  = equipped != null ? equipped.icon : null;
             inventorySlots[i].enabled = equipped != null;
         }
@@ -259,5 +284,49 @@ public class HUDController : MonoBehaviour
             _lines.Dequeue();
 
         consoleText.text = string.Join("\n", _lines);
+    }
+
+    void TryBindRuntimeManagers()
+    {
+        if (_boundPlayerStats == null)
+        {
+            _boundPlayerStats = PlayerStats.Instance != null ? PlayerStats.Instance : FindFirstObjectByType<PlayerStats>();
+            if (_boundPlayerStats != null)
+            {
+                _boundPlayerStats.OnStatsChanged += Refresh;
+                _lastKnownHP = _boundPlayerStats.CurrentHP;
+                Refresh();
+            }
+        }
+
+        if (_boundGameManager == null)
+        {
+            _boundGameManager = GameManager.Instance != null ? GameManager.Instance : FindFirstObjectByType<GameManager>();
+            if (_boundGameManager != null)
+            {
+                _boundGameManager.OnStateChanged += OnStateChanged;
+                OnStateChanged(_boundGameManager.CurrentState);
+            }
+        }
+
+        if (_boundInventory == null)
+        {
+            _boundInventory = PlayerInventory.Instance != null ? PlayerInventory.Instance : FindFirstObjectByType<PlayerInventory>();
+            if (_boundInventory != null)
+            {
+                _boundInventory.OnInventoryChanged += RefreshInventory;
+                RefreshInventory();
+            }
+        }
+
+        if (_boundFloorManager == null)
+        {
+            _boundFloorManager = FloorManager.Instance != null ? FloorManager.Instance : FindFirstObjectByType<FloorManager>();
+            if (_boundFloorManager != null)
+            {
+                _boundFloorManager.OnGoldChanged += OnGoldChanged;
+                OnGoldChanged(_boundFloorManager.Gold);
+            }
+        }
     }
 }

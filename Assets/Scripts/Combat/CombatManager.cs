@@ -8,6 +8,7 @@ public class CombatManager : MonoBehaviour
     [Header("Rewards")]
     [SerializeField] private int minGoldPerKill = 1;
     [SerializeField] private int maxGoldPerKill = 5;
+    [SerializeField, Range(0f, 1f)] private float nonBossPotionDropChance = 0.10f;
 
     public event System.Action OnCombatEnd; // Invoked when enemy defeated
 
@@ -15,6 +16,11 @@ public class CombatManager : MonoBehaviour
     private SpellType selectedSpell;
     private float enemyAttackCooldown = 0f;
     private const float AttackCooldownDuration = 2f;
+    private bool bossPhase2Active = false;
+    private float bossElementShiftCooldown = 0f;
+    private const float BossShiftIntervalHigh = 3f;
+    private const float BossShiftIntervalMid = 2f;
+    private const float BossShiftIntervalLow = 1.5f;
 
     void Awake()
     {
@@ -50,6 +56,21 @@ public class CombatManager : MonoBehaviour
                 EnemyAttack();
                 enemyAttackCooldown = AttackCooldownDuration;
             }
+
+            if (bossPhase2Active && currentCombatEnemy.data != null && currentCombatEnemy.data.isBoss)
+            {
+                bossElementShiftCooldown -= Time.deltaTime;
+                if (bossElementShiftCooldown <= 0f)
+                {
+                    SpellType next = GetRandomDifferentResistance(currentCombatEnemy.Resistance);
+                    currentCombatEnemy.SetResistance(next);
+                    EnemySpawner.Instance?.RefreshEnemyVisual(currentCombatEnemy);
+                    if (AudioManager.Instance != null && currentCombatEnemy != null && currentCombatEnemy.data != null)
+                        AudioManager.Instance.PlaySFX(currentCombatEnemy.data.elementShiftClip);
+                    HUDController.Instance?.Log($"{currentCombatEnemy.DisplayName} shifts element to {next}!");
+                    bossElementShiftCooldown = GetBossElementShiftInterval(currentCombatEnemy);
+                }
+            }
         }
     }
 
@@ -77,6 +98,8 @@ public class CombatManager : MonoBehaviour
         {
             currentCombatEnemy = nextTarget;
             enemyAttackCooldown = AttackCooldownDuration;
+            bossPhase2Active = false;
+            bossElementShiftCooldown = 0f;
 
             if (CombatUIController.Instance != null)
             {
@@ -86,8 +109,8 @@ public class CombatManager : MonoBehaviour
 
             if (currentCombatEnemy != null)
             {
-                Debug.Log($"[COMBAT START] Engaged with {currentCombatEnemy.data.enemyName} (Resist: {currentCombatEnemy.Resistance})");
-                HUDController.Instance?.Log($"You encounter {currentCombatEnemy.data.enemyName}!");
+                Debug.Log($"[COMBAT START] Engaged with {currentCombatEnemy.DisplayName} (Resist: {currentCombatEnemy.Resistance})");
+                HUDController.Instance?.Log($"You encounter {currentCombatEnemy.DisplayName}!");
             }
         }
     }
@@ -103,7 +126,7 @@ public class CombatManager : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[SPELL TARGET] {currentCombatEnemy.data.enemyName}");
+            Debug.Log($"[SPELL TARGET] {currentCombatEnemy.DisplayName}");
         }
 
         selectedSpell = spell;
@@ -141,39 +164,59 @@ public class CombatManager : MonoBehaviour
         if (hitResult != SpellHitResult.Immune)
         {
             bool died = currentCombatEnemy.TakeDamage(damage);
-            Debug.Log($"[DAMAGE] {currentCombatEnemy.data.enemyName} HP: {currentCombatEnemy.CurrentHP}/{currentCombatEnemy.data.maxHP}");
+            Debug.Log($"[DAMAGE] {currentCombatEnemy.DisplayName} HP: {currentCombatEnemy.CurrentHP}/{currentCombatEnemy.data.maxHP}");
+            if (AudioManager.Instance != null && currentCombatEnemy != null && currentCombatEnemy.data != null)
+                AudioManager.Instance.PlaySFX(currentCombatEnemy.data.attackClip);
 
             string hitMsg = hitResult == SpellHitResult.Extra
-                ? $"Resonance! {selectedSpell} deals {damage} damage to {currentCombatEnemy.data.enemyName}."
+                ? $"Resonance! {selectedSpell} deals {damage} damage to {currentCombatEnemy.DisplayName}."
                 : hitResult == SpellHitResult.Reduced
-                    ? $"{selectedSpell} is resisted and deals {damage} damage to {currentCombatEnemy.data.enemyName}."
-                    : $"{selectedSpell} deals {damage} damage to {currentCombatEnemy.data.enemyName}.";
+                    ? $"{selectedSpell} is resisted and deals {damage} damage to {currentCombatEnemy.DisplayName}."
+                    : $"{selectedSpell} deals {damage} damage to {currentCombatEnemy.DisplayName}.";
             HUDController.Instance?.Log(hitMsg);
 
             if (currentCombatEnemy.data.isBoss &&
                 currentCombatEnemy.CurrentHP <= currentCombatEnemy.data.maxHP / 2 &&
                 currentCombatEnemy.data.secondPhaseElement != currentCombatEnemy.Resistance)
             {
-                Debug.Log($"[BOSS PHASE 2] {currentCombatEnemy.data.enemyName} transforms!");
+                Debug.Log($"[BOSS PHASE 2] {currentCombatEnemy.DisplayName} transforms!");
                 currentCombatEnemy.SetResistance(currentCombatEnemy.data.secondPhaseElement);
                 EnemySpawner.Instance?.RefreshEnemyVisual(currentCombatEnemy);
-                HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} shifts element!");
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.PlaySFX(currentCombatEnemy.data.elementShiftClip);
+                HUDController.Instance?.Log($"{currentCombatEnemy.DisplayName} shifts element!");
+                bossPhase2Active = true;
+                bossElementShiftCooldown = GetBossElementShiftInterval(currentCombatEnemy);
             }
 
             if (died)
             {
+                CombatUIController.Instance?.RegisterEnemyDefeat(currentCombatEnemy.DisplayName);
+
+                bool wasBoss = currentCombatEnemy.data != null && currentCombatEnemy.data.isBoss;
+
                 int rollMin = Mathf.Min(minGoldPerKill, maxGoldPerKill);
                 int rollMax = Mathf.Max(minGoldPerKill, maxGoldPerKill);
                 int goldReward = Random.Range(rollMin, rollMax + 1) + PlayerStats.Instance.GoldBonusPerKill;
                 goldReward = Mathf.Max(1, goldReward);
                 FloorManager.Instance?.AddGold(goldReward);
 
-                Debug.Log($"[VICTORY] {currentCombatEnemy.data.enemyName} defeated!");
-                HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} defeated!");
+                if (!wasBoss && Random.value < nonBossPotionDropChance)
+                {
+                    PlayerStats.Instance?.AddPotionCharges(1);
+                    HUDController.Instance?.Log("The enemy dropped a potion.");
+                }
+
+                Debug.Log($"[VICTORY] {currentCombatEnemy.DisplayName} defeated!");
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.PlaySFX(currentCombatEnemy.data.deathClip);
+                HUDController.Instance?.Log($"{currentCombatEnemy.DisplayName} defeated!");
                 HUDController.Instance?.Log($"You found {goldReward} gold.");
                 currentCombatEnemy.DropLoot();
                 EnemySpawner.Instance.RemoveEnemy(currentCombatEnemy);
                 currentCombatEnemy = null;
+                bossPhase2Active = false;
+                bossElementShiftCooldown = 0f;
                 OnCombatEnd?.Invoke();
                 return;
             }
@@ -182,7 +225,8 @@ public class CombatManager : MonoBehaviour
         }
         else
         {
-            HUDController.Instance?.Log($"{selectedSpell} has no effect on {currentCombatEnemy.data.enemyName}.");
+            CombatUIController.Instance?.RegisterResistanceDiscovery(currentCombatEnemy.DisplayName, currentCombatEnemy.Resistance);
+            HUDController.Instance?.Log($"{selectedSpell} has no effect on {currentCombatEnemy.DisplayName}.");
         }
 
     }
@@ -200,13 +244,15 @@ public class CombatManager : MonoBehaviour
         if (currentCombatEnemy == null) return;
 
         currentCombatEnemy.TriggerAttackVisual();
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(currentCombatEnemy.data != null ? currentCombatEnemy.data.attackClip : null);
 
         int dmg = currentCombatEnemy.data.attackDamage;
         if (PlayerStats.Instance.HasEarplugs) dmg = Mathf.Max(1, dmg - 2);
         
         bool dead = PlayerStats.Instance.TakeDamage(dmg);
-        Debug.Log($"[ENEMY ATTACK] {currentCombatEnemy.data.enemyName} attacks! -{dmg} HP (Player HP: {PlayerStats.Instance.CurrentHP})");
-        HUDController.Instance?.Log($"{currentCombatEnemy.data.enemyName} hits you for {dmg} damage.");
+        Debug.Log($"[ENEMY ATTACK] {currentCombatEnemy.DisplayName} attacks! -{dmg} HP (Player HP: {PlayerStats.Instance.CurrentHP})");
+        HUDController.Instance?.Log($"{currentCombatEnemy.DisplayName} hits you for {dmg} damage.");
         CombatUIController.Instance?.ShowPlayerHit(dmg);
 
         if (dead)
@@ -217,5 +263,23 @@ public class CombatManager : MonoBehaviour
     }
 
     public EnemyInstance GetCurrentEnemy() => currentCombatEnemy;
+
+    static SpellType GetRandomDifferentResistance(SpellType current)
+    {
+        SpellType[] all = { SpellType.Consonant, SpellType.Assonant, SpellType.Dissonant };
+        SpellType first = all[0] == current ? all[1] : all[0];
+        SpellType second = all[2] == current ? all[1] : all[2];
+        return Random.value < 0.5f ? first : second;
+    }
+
+    static float GetBossElementShiftInterval(EnemyInstance boss)
+    {
+        if (boss == null || boss.MaxHP <= 0) return BossShiftIntervalHigh;
+
+        float hpRatio = (float)boss.CurrentHP / boss.MaxHP;
+        if (hpRatio <= 0.2f) return BossShiftIntervalLow;
+        if (hpRatio <= 0.4f) return BossShiftIntervalMid;
+        return BossShiftIntervalHigh;
+    }
 }
 

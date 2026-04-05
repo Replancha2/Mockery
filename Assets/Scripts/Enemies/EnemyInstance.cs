@@ -10,6 +10,7 @@ public class EnemyInstance : MonoBehaviour
     public int             MaxHP       { get; private set; }
     public Vector2Int      GridPos     { get; private set; }
     public SpellType       Resistance  { get; private set; }
+    public string DisplayName { get; private set; }
     public EnemyVisualState CurrentVisualState { get; private set; } = EnemyVisualState.Idle;
     public Vector3 BaseLocalScale { get; private set; } = Vector3.one;
 
@@ -20,6 +21,7 @@ public class EnemyInstance : MonoBehaviour
 
     private Coroutine _hitShakeRoutine;
     private Coroutine _visualStateRoutine;
+    private Coroutine _ambientSoundRoutine;
     private SpriteRenderer _spriteRenderer;
 
     public void Init(EnemyData d, Vector2Int pos)
@@ -28,19 +30,73 @@ public class EnemyInstance : MonoBehaviour
         MaxHP     = d.maxHP;
         CurrentHP = MaxHP;
         GridPos   = pos;
-        Resistance = (SpellType)Random.Range(0, 3);
+        Resistance = (d != null && d.isBoss)
+            ? GetRandomResistanceExcluding(d.secondPhaseElement)
+            : (SpellType)Random.Range(0, 3);
+        DisplayName = ResolveDisplayName();
         BaseLocalScale = transform.localScale;
         _spriteRenderer = GetComponent<SpriteRenderer>();
 
         transform.position = GridMover.GridToWorld(pos);
         SetVisualState(EnemyVisualState.Idle);
+        if (d != null && d.isBoss)
+            Debug.Log($"[BOSS INIT] {DisplayName} starts with {Resistance} (phase 2: {d.secondPhaseElement}).");
+
+        if (_ambientSoundRoutine != null)
+            StopCoroutine(_ambientSoundRoutine);
+        _ambientSoundRoutine = StartCoroutine(RandomAmbientSoundRoutine());
         // if (d.vfxPrefab) Instantiate(d.vfxPrefab, transform);
     }
 
     public void SetResistance(SpellType newResistance)
     {
         Resistance = newResistance;
+        DisplayName = ResolveDisplayName();
         RefreshVisual();
+    }
+
+    public static string GetNameForResistance(SpellType resistance)
+    {
+        return resistance switch
+        {
+            SpellType.Consonant => "Waton",
+            SpellType.Assonant => "Imp",
+            SpellType.Dissonant => "Demon",
+            _ => "Unknown"
+        };
+    }
+
+    string ResolveDisplayName()
+    {
+        if (data != null && data.isBoss)
+        {
+            if (!string.IsNullOrWhiteSpace(data.enemyName))
+                return data.enemyName;
+            return "Dragon";
+        }
+
+        return GetNameForResistance(Resistance);
+    }
+
+    static SpellType GetRandomResistanceExcluding(SpellType excluded)
+    {
+        SpellType[] all = { SpellType.Consonant, SpellType.Assonant, SpellType.Dissonant };
+        int excludedIndex = -1;
+
+        for (int i = 0; i < all.Length; i++)
+        {
+            if (all[i] == excluded)
+            {
+                excludedIndex = i;
+                break;
+            }
+        }
+
+        int roll = Random.Range(0, all.Length - 1);
+        if (excludedIndex >= 0 && roll >= excludedIndex)
+            roll++;
+
+        return all[Mathf.Clamp(roll, 0, all.Length - 1)];
     }
 
     public void SetGridPos(Vector2Int pos)
@@ -115,6 +171,33 @@ public class EnemyInstance : MonoBehaviour
 
         transform.position = startPos;
         _hitShakeRoutine = null;
+    }
+
+    IEnumerator RandomAmbientSoundRoutine()
+    {
+        while (true)
+        {
+            float delay = Random.Range(2.5f, 7.0f);
+            yield return new WaitForSeconds(delay);
+
+            if (data == null || data.ambientClips == null || data.ambientClips.Length == 0)
+                continue;
+
+            if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameState.Exploring)
+                continue;
+
+            if (AudioManager.Instance != null)
+            {
+                AudioClip clip = data.ambientClips[Random.Range(0, data.ambientClips.Length)];
+                AudioManager.Instance.PlaySFXAtPosition(clip, transform.position, 1f, 1f);
+            }
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (_ambientSoundRoutine != null)
+            StopCoroutine(_ambientSoundRoutine);
     }
 
     public enum AbilityType { Heal, DOT, PowerStrike }

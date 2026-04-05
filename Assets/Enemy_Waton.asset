@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 929be42ded63bd0f38e5cbab2306244e, type: 3}
+  m_Name: Enemy_Waton
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  enemyName: Waton
+  element: 0
+  secondPhaseElement: 0
+  maxHP: 25
+  attackDamage: 4
+  isBoss: 0
+  sprite: {fileID: 0}
+  elementVFXPrefab: {fileID: 0}
+  ambientClips:
+  - {fileID: 8300000, guid: 98d197dd2ac04304cab9a9459f05fa96, type: 3}
+  - {fileID: 8300000, guid: 32574f0036d9e394f93cff1cb7a3e72c, type: 3}
+  - {fileID: 8300000, guid: c95dc156bc824984f8451cde0ac8d0eb, type: 3}
+  attackClip: {fileID: 8300000, guid: c823c55edd96e50499176b9b71ba3e27, type: 3}
+  deathClip: {fileID: 8300000, guid: 83617eec3c5b1b448a51fc505ef55820, type: 3}
+  elementShiftClip: {fileID: 0}

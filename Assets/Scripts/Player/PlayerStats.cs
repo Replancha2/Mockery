@@ -29,7 +29,7 @@ public class PlayerStats : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
@@ -39,12 +39,18 @@ public class PlayerStats : MonoBehaviour
             { SpellType.Assonant,  0 },
             { SpellType.Dissonant, 0 },
         };
+
+        // Initialize in Awake so any early gameplay callback can't see zero HP.
+        CurrentHP = maxHP;
+        PotionCharges = startingPotionCharges;
     }
 
     void Start()
     {
-        CurrentHP = maxHP;
-        PotionCharges = startingPotionCharges;
+        if (CurrentHP <= 0)
+            CurrentHP = maxHP;
+        if (PotionCharges <= 0)
+            PotionCharges = startingPotionCharges;
     }
 
     public void ResetForNewRun()

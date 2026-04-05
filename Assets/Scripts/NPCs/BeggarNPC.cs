@@ -14,10 +14,14 @@ public class BeggarNPC : MonoBehaviour
 
     [Header("Stab")]
     [Range(0f, 1f)] public float stabHPPercent = 0.35f;
+    public AudioClip stabClip;
 
     [Header("Good Reward Pool")]
     public BuffData[] buffPool;
     public ItemData[] itemPool;
+
+    [Header("Visual")]
+    [SerializeField] private float spawnY = 1.337f;
 
     public Vector2Int GridPos     { get; private set; }
     public bool       AlreadyUsed { get; private set; } = false;
@@ -29,8 +33,8 @@ public class BeggarNPC : MonoBehaviour
         AlreadyUsed = false;
     }
 
-    private static Vector3 GridToWorld(Vector2Int pos)
-        => new Vector3(pos.x * 4f, 1.6f, pos.y * 4f);
+    private Vector3 GridToWorld(Vector2Int pos)
+        => new Vector3(pos.x * 4f, spawnY, pos.y * 4f);
 
     public void Interact()
     {
@@ -59,6 +63,7 @@ public class BeggarNPC : MonoBehaviour
     public BeggarResult ResolveStab()
     {
         AlreadyUsed = true;
+        AudioManager.Instance?.PlaySFX(stabClip);
         int damage = Mathf.RoundToInt(PlayerStats.Instance.maxHP * stabHPPercent);
         PlayerStats.Instance.TakeDamage(damage);
         if (PlayerStats.Instance.CurrentHP <= 0) GameManager.Instance.GameOver();

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Reflection;
 
 public class SongInputHandler : MonoBehaviour
 {
@@ -67,6 +68,8 @@ public class SongInputHandler : MonoBehaviour
         Dir? pressed = GetPressedDir();
         if (pressed == null) return;
 
+        TryPlaySequenceStepSfx();
+
         Dir[] sequence = Songs[ActiveSong];
         if (pressed == sequence[CurrentIndex])
         {
@@ -107,5 +110,41 @@ public class SongInputHandler : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))  return Dir.Left;
         if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)) return Dir.Right;
         return null;
+    }
+
+    void TryPlaySequenceStepSfx()
+    {
+        AudioManager am = AudioManager.Instance;
+        if (am == null) return;
+
+        System.Type t = am.GetType();
+
+        // Newer API path.
+        MethodInfo playRandom = t.GetMethod("PlayRandomSequenceStep", BindingFlags.Instance | BindingFlags.Public);
+        if (playRandom != null)
+        {
+            playRandom.Invoke(am, null);
+            return;
+        }
+
+        // Older API path: sequenceStepClips + PlaySFX(AudioClip).
+        AudioClip[] clips = null;
+        FieldInfo clipsField = t.GetField("sequenceStepClips", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (clipsField != null)
+            clips = clipsField.GetValue(am) as AudioClip[];
+
+        if ((clips == null || clips.Length == 0))
+        {
+            PropertyInfo clipsProp = t.GetProperty("sequenceStepClips", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (clipsProp != null)
+                clips = clipsProp.GetValue(am, null) as AudioClip[];
+        }
+
+        if (clips == null || clips.Length == 0) return;
+
+        AudioClip pick = clips[Random.Range(0, clips.Length)];
+        MethodInfo playSfx = t.GetMethod("PlaySFX", BindingFlags.Instance | BindingFlags.Public, null, new[] { typeof(AudioClip) }, null);
+        if (playSfx != null)
+            playSfx.Invoke(am, new object[] { pick });
     }
 }
