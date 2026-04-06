@@ -1,0 +1,364 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1170967100646686139
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9031598526468188375}
+  - component: {fileID: 3756471506577703668}
+  m_Layer: 0
+  m_Name: EnemySpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9031598526468188375
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1170967100646686139}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -0, y: 0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7262571568180270528}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3756471506577703668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1170967100646686139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 531aea37a9045aac0bb2fb5cd209df5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  basicEnemies:
+  - {fileID: 11400000, guid: 91ce5c28c63ef576a8aa215dd30d6383, type: 2}
+  - {fileID: 11400000, guid: 8028a6541bacc574d99022c15ef04c24, type: 2}
+  - {fileID: 11400000, guid: 489cc35581ce15a0d8fa1d13a64c73f9, type: 2}
+  bossData: {fileID: 11400000, guid: 523119fd810b950e796ea29988fdda34, type: 2}
+  enemyPrefab: {fileID: 3862683650480417168, guid: 1e0a3121255457807ad2674fb7ba3fae, type: 3}
+  placeholderSprite: {fileID: 21300000, guid: bebad32da33625c4e911b3fb5ace7aa6, type: 3}
+  consonantResistantSprites:
+    idle: {fileID: -187749519, guid: d2beaf475f7158643883836fbf5ec67e, type: 3}
+    move: {fileID: 711950472, guid: a7d3eec377815be4789d9fd8f9952663, type: 3}
+    attack: {fileID: 1650814234, guid: cafefa27fd27e7944989d3e25274b18a, type: 3}
+  assonantResistantSprites:
+    idle: {fileID: -441164738, guid: 2a40711fe8cb0aa43b44ed572d30df54, type: 3}
+    move: {fileID: 2063040254, guid: 1f4ce4450cf68d6429ce4c0718f867b5, type: 3}
+    attack: {fileID: -1959260563, guid: 2f1a2f89ad5824e4184d6c79e783690a, type: 3}
+  dissonantResistantSprites:
+    idle: {fileID: 628097386, guid: 5b0260322cea2af4da36efde59ebb0fe, type: 3}
+    move: {fileID: 825268638, guid: 9560f658230da4d4287fe8d3243de870, type: 3}
+    attack: {fileID: -1712313082, guid: 1727c2b52a9440e4bb1c1eaca6da2ce3, type: 3}
+  bossSprites:
+    idle: {fileID: 0}
+    move: {fileID: 0}
+    attack: {fileID: 0}
+  bossUsesResistanceTint: 1
+  consonantBossTint: {r: 0.65, g: 0.8, b: 1, a: 1}
+  assonantBossTint: {r: 1, g: 0.7, b: 0.78, a: 1}
+  dissonantBossTint: {r: 0.75, g: 1, b: 0.72, a: 1}
+  normalizeSpriteSize: 1
+  targetSpriteWorldHeight: 2
+--- !u!1 &1813927640595995453
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4485976398528855658}
+  - component: {fileID: 3648489784159656506}
+  m_Layer: 0
+  m_Name: DungeonRenderer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4485976398528855658
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1813927640595995453}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7262571568180270528}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3648489784159656506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1813927640595995453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60ad116c487a2b187823d51d97e4d861, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonRenderer
+  wallPrefab: {fileID: 4780116086892474402, guid: 94675a598e1a377a1bbea317ea0b7074, type: 3}
+  floorPrefab: {fileID: 6366277330295936291, guid: d821f0261980b5e28aa5cd259a1358dc, type: 3}
+  ceilingPrefab: {fileID: 3977890876572557083, guid: 3d16d16abe68b5742a17769172500f17, type: 3}
+  stairsPrefab: {fileID: 8333275421535235222, guid: 904d9cc9bfd1a17f1a16bb1821c7e7b5, type: 3}
+  wallMaterials:
+  - {fileID: 2100000, guid: 8bc5ae53e578d1c409ae1b976c9c4a31, type: 2}
+  - {fileID: 2100000, guid: 647eef003671fad4f9d89f7267b9b9dd, type: 2}
+  - {fileID: 2100000, guid: 09c0874111d135b47bca720d58b5966d, type: 2}
+  - {fileID: 2100000, guid: 785440614ed9e3d4686820bac2b8b463, type: 2}
+  floorMaterials:
+  - {fileID: 2100000, guid: ae7dd0bd2ec7fed43a1bf21a46738159, type: 2}
+  - {fileID: 2100000, guid: 54454a75320bfe74fae288b589864b75, type: 2}
+  - {fileID: 2100000, guid: 2d9472303848ec646b51bf746abb76e8, type: 2}
+  - {fileID: 2100000, guid: 16212a3486e7679439775a20a8ccc11f, type: 2}
+  ceilingMaterials:
+  - {fileID: 2100000, guid: 46724975980509d4ab787f21bdec5c4e, type: 2}
+  - {fileID: 2100000, guid: 02f7d0402b46bed4687cc3a48bca52e8, type: 2}
+  - {fileID: 2100000, guid: 7d4dda88a0caca9478a3b502c1f1d6fe, type: 2}
+  floorMaterialSets:
+  - floor: 1
+    wallMaterials:
+    - {fileID: 2100000, guid: 09c0874111d135b47bca720d58b5966d, type: 2}
+    floorMaterials:
+    - {fileID: 2100000, guid: 94b32426b79113949ab35d7b63bc6b7a, type: 2}
+    ceilingMaterials:
+    - {fileID: 2100000, guid: 46724975980509d4ab787f21bdec5c4e, type: 2}
+  - floor: 2
+    wallMaterials:
+    - {fileID: 2100000, guid: 09c0874111d135b47bca720d58b5966d, type: 2}
+    floorMaterials:
+    - {fileID: 2100000, guid: ae7dd0bd2ec7fed43a1bf21a46738159, type: 2}
+    - {fileID: 2100000, guid: 2d9472303848ec646b51bf746abb76e8, type: 2}
+    ceilingMaterials:
+    - {fileID: 2100000, guid: 02f7d0402b46bed4687cc3a48bca52e8, type: 2}
+  - floor: 3
+    wallMaterials: []
+    floorMaterials: []
+    ceilingMaterials: []
+  - floor: 4
+    wallMaterials: []
+    floorMaterials: []
+    ceilingMaterials: []
+  - floor: 5
+    wallMaterials: []
+    floorMaterials: []
+    ceilingMaterials: []
+--- !u!1 &3343146001414174859
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7262571568180270528}
+  m_Layer: 0
+  m_Name: _Dungeon
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7262571568180270528
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3343146001414174859}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5730763717180448153}
+  - {fileID: 4485976398528855658}
+  - {fileID: 6353227163564312772}
+  - {fileID: 9031598526468188375}
+  - {fileID: 8374437226987708761}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5346511979095163644
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5730763717180448153}
+  - component: {fileID: 4166912845671562627}
+  m_Layer: 0
+  m_Name: BSPGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5730763717180448153
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5346511979095163644}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7262571568180270528}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4166912845671562627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5346511979095163644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0dbc407a2b3292eebb34a1ea4405a3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BSPGenerator
+  mapWidth: 40
+  mapHeight: 40
+  minLeafSize: 8
+  maxLeafSize: 16
+  minRoomFillRatio: 0.45
+  maxRoomFillRatio: 0.72
+  roomBoundaryPadding: 1
+  extraConnectionChance: 0.55
+  maxExtraConnectionsPerNode: 1
+  jaggedCorridorChance: 0.4
+  jaggedOffsetTiles: 2
+  minCorridorTurns: 2
+  maxCorridorTurns: 4
+  enemiesPerFloor: 4
+  bossFloorRoomMargin: 2
+--- !u!1 &8509063893882527682
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8374437226987708761}
+  - component: {fileID: 585105314711858849}
+  - component: {fileID: 5492625355113036639}
+  m_Layer: 0
+  m_Name: CombatSystems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8374437226987708761
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8509063893882527682}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7262571568180270528}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &585105314711858849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8509063893882527682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 196dd3cd5e67dbd9e85861d82ec0d675, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatManager
+  minGoldPerKill: 1
+  maxGoldPerKill: 5
+  nonBossPotionDropChance: 0.1
+--- !u!114 &5492625355113036639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8509063893882527682}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2389bf4bcd34ca409a6e9c36f321b98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SongInputHandler
+--- !u!1 &8831663679276241924
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6353227163564312772}
+  - component: {fileID: 4399935377884388539}
+  m_Layer: 0
+  m_Name: DungeonOrchestrator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6353227163564312772
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8831663679276241924}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7262571568180270528}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4399935377884388539
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8831663679276241924}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5812f373decab2fcfa15eb1f05091beb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonOrchestrator

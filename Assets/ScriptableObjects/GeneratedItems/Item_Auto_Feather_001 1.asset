@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
-  m_Name: Item_Shirt_04
+  m_Name: Item_Auto_Feather_001 1
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Legendary Shirt
-  slot: 1
-  elementBonus: 2
-  icon: {fileID: 1669781451, guid: 4a75d5d2d81f1fe4f883dfcbfedb2de5, type: 3}
+  itemName: Worn Feather Consonant of Wind #13
+  slot: 4
+  elementBonus: 0
+  icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 25
-  hpBonus: 10
-  defenseBonus: 6
-  AssonantBonus: 2
-  DissonantBonus: 2
-  ConsonantBonus: 2
+  buyPrice: 6
+  hpBonus: 1
+  defenseBonus: 2
+  AssonantBonus: 0
+  DissonantBonus: 0
+  ConsonantBonus: 5

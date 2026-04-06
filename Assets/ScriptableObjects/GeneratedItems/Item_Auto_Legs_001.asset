@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Legs_001
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Rare Hat
-  slot: 0
-  elementBonus: 1
-  icon: {fileID: 1525344730, guid: d35f7fcb77751964a88a2995b8649083, type: 3}
+  itemName: Silent Legs Dissonant of Night #7
+  slot: 2
+  elementBonus: 2
+  icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 7
-  hpBonus: 4
-  defenseBonus: 4
+  buyPrice: 14
+  hpBonus: 8
+  defenseBonus: 2
   AssonantBonus: 0
-  DissonantBonus: 0
+  DissonantBonus: 4
   ConsonantBonus: 0

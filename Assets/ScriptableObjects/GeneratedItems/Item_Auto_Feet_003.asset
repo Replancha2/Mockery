@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Feet_003
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Rare Pants
-  slot: 2
+  itemName: Shiny Feet Assonant of Verse #12
+  slot: 3
   elementBonus: 1
-  icon: {fileID: 2109318949, guid: 47635dc83591d304fb44f9508fcd0af2, type: 3}
+  icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 10
-  hpBonus: 7
-  defenseBonus: 5
-  AssonantBonus: 0
+  buyPrice: 14
+  hpBonus: 3
+  defenseBonus: 4
+  AssonantBonus: 5
   DissonantBonus: 0
-  ConsonantBonus: 4
+  ConsonantBonus: 0

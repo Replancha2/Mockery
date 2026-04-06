@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Feather_003
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Echo Feather Consonant of Verse #15
+  itemName: Shiny Feather Consonant of Night #15
   slot: 4
   elementBonus: 0
   icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 4
-  hpBonus: 6
+  buyPrice: 13
+  hpBonus: 5
   defenseBonus: 4
   AssonantBonus: 0
   DissonantBonus: 0
-  ConsonantBonus: 2
+  ConsonantBonus: 3

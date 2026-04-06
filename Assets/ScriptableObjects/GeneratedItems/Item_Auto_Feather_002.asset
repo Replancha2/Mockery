@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Feather_002
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Uncommon Feather
+  itemName: Brave Feather Consonant of Dust #14
   slot: 4
-  elementBonus: 2
-  icon: {fileID: 36419020, guid: 02e4d15ae1216674bbc6548edc40b3f0, type: 3}
+  elementBonus: 0
+  icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 5
-  hpBonus: 0
-  defenseBonus: 0
-  AssonantBonus: 2
-  DissonantBonus: 1
-  ConsonantBonus: 0
+  buyPrice: 3
+  hpBonus: 2
+  defenseBonus: 4
+  AssonantBonus: 0
+  DissonantBonus: 0
+  ConsonantBonus: 2

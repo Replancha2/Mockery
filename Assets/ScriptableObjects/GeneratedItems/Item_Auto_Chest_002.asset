@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Chest_002
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Echo Chest Consonant of Tone #5
+  itemName: Echo Chest Dissonant of Sparks #5
   slot: 1
-  elementBonus: 0
-  icon: {fileID: 1525344730, guid: d35f7fcb77751964a88a2995b8649083, type: 3}
+  elementBonus: 2
+  icon: {fileID: 0}
   restoreAmount: 0
   buyPrice: 12
-  hpBonus: 8
-  defenseBonus: 0
+  hpBonus: 6
+  defenseBonus: 2
   AssonantBonus: 0
-  DissonantBonus: 0
-  ConsonantBonus: 1
+  DissonantBonus: 3
+  ConsonantBonus: 0

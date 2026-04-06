@@ -13,6 +13,12 @@ public class EnemyData : ScriptableObject
     public Sprite sprite;               // shown on combat screen
     public GameObject elementVFXPrefab; // colored particle in dungeon
 
+    [Header("Audio")]
+    public AudioClip[] ambientClips;
+    public AudioClip attackClip;
+    public AudioClip deathClip;
+    public AudioClip elementShiftClip;
+
     [Header("Loot")]
     [Range(0f, 1f)] public float itemDropChance;
     public ItemData[] itemPool;

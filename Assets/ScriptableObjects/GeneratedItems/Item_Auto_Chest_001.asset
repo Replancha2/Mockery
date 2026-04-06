@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Chest_001
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Broken Chest Consonant of Dust #4
+  itemName: Shiny Chest Dissonant of Verse #4
   slot: 1
-  elementBonus: 0
+  elementBonus: 2
   icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 5
-  hpBonus: 2
-  defenseBonus: 3
+  buyPrice: 14
+  hpBonus: 8
+  defenseBonus: 1
   AssonantBonus: 0
-  DissonantBonus: 0
-  ConsonantBonus: 1
+  DissonantBonus: 2
+  ConsonantBonus: 0

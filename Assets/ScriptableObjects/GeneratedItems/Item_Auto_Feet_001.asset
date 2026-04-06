@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26a02634619a62a679ea232339b1685c, type: 3}
   m_Name: Item_Auto_Feet_001
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  itemName: Uncommon Boots
+  itemName: Rough Feet Consonant of Wind #10
   slot: 3
-  elementBonus: 1
-  icon: {fileID: 367063105, guid: 83d82971302f9814e83789dd781c79fe, type: 3}
+  elementBonus: 0
+  icon: {fileID: 0}
   restoreAmount: 0
-  buyPrice: 5
-  hpBonus: 1
-  defenseBonus: 3
-  AssonantBonus: 1
+  buyPrice: 11
+  hpBonus: 8
+  defenseBonus: 2
+  AssonantBonus: 0
   DissonantBonus: 0
   ConsonantBonus: 0

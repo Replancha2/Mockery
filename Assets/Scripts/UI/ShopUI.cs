@@ -28,7 +28,9 @@ public class ShopUI : MonoBehaviour
     {
         if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
+        Debug.Log($"[ShopUI] Awake — panel={panel?.name} active={panel?.activeSelf}");
         panel.SetActive(false);
+        Debug.Log($"[ShopUI] Awake after hide — panel active={panel?.activeSelf}");
     }
 
     void Start()
@@ -62,6 +64,7 @@ public class ShopUI : MonoBehaviour
 
     public void Show(VendorNPC vendor, List<ItemData> vendorStock)
     {
+        Debug.Log($"[ShopUI] Show() called\n{System.Environment.StackTrace}");
         _currentVendor = vendor;
         stock = vendorStock;
         RefreshSlots();
